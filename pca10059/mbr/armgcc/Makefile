@@ -8,7 +8,7 @@ DFU_PORT         ?= /dev/ttyACM0
 PROJ_DIR := ../../..
 
 ifndef SDK_ROOT
-	$(error SDK_ROOT is not set)
+  $(error SDK_ROOT is not set)
 endif
 
 $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
