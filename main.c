@@ -3,13 +3,15 @@
 #include "nrf_delay.h"
 #include "boards.h"
 
-#define BLINK_INTERVAL 300
-#define PAUSE_BETWEEN_BLINKS 1000
+#define BLINK_DURATION 300
+#define BLINK_PERIOD   500
+
+#define BLINK_PAUSE_BETWEEN_LEDS 1000
 
 void blink_led(int led_id)
 {
     bsp_board_led_invert(led_id);
-    nrf_delay_ms(BLINK_INTERVAL);
+    nrf_delay_ms(BLINK_DURATION);
     bsp_board_led_invert(led_id);
 }
 
@@ -17,18 +19,18 @@ void blink_led_many(int led_id, int n)
 {
     if (n == 0)
     {
-        nrf_delay_ms(PAUSE_BETWEEN_BLINKS);
+        nrf_delay_ms(BLINK_PAUSE_BETWEEN_LEDS);
         return;
     }
 
     for (int i = 0; i < n - 1; i++)
     {
         blink_led(led_id);
-        nrf_delay_ms(BLINK_INTERVAL);
+        nrf_delay_ms(BLINK_PERIOD - BLINK_DURATION);
     }
 
     blink_led(led_id);
-    nrf_delay_ms(PAUSE_BETWEEN_BLINKS);
+    nrf_delay_ms(BLINK_PAUSE_BETWEEN_LEDS);
 }
 
 // Device ID is 7202
