@@ -15,11 +15,11 @@ void blink_led(int led_id)
     bsp_board_led_invert(led_id);
 }
 
-void blink_led_many(int led_id, int n)
+void blink_led_many(int led_id, int blink_count)
 {
-    if (n == 0) return;
+    if (blink_count == 0) return;
 
-    for (int i = 0; i < n - 1; i++)
+    for (int i = 0; i < blink_count - 1; i++)
     {
         blink_led(led_id);
         nrf_delay_ms(BLINK_PERIOD - BLINK_DURATION);
@@ -44,3 +44,4 @@ int main(void)
         }
     }
 }
+
