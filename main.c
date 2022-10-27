@@ -17,11 +17,7 @@ void blink_led(int led_id)
 
 void blink_led_many(int led_id, int n)
 {
-    if (n == 0)
-    {
-        nrf_delay_ms(BLINK_PAUSE_BETWEEN_LEDS);
-        return;
-    }
+    if (n == 0) return;
 
     for (int i = 0; i < n - 1; i++)
     {
@@ -30,7 +26,6 @@ void blink_led_many(int led_id, int n)
     }
 
     blink_led(led_id);
-    nrf_delay_ms(BLINK_PAUSE_BETWEEN_LEDS);
 }
 
 // Device ID is 7202
@@ -45,6 +40,7 @@ int main(void)
         for (int i = 0; i < LEDS_NUMBER; i++)
         {
 	    blink_led_many(i, BLINKS[i]);
+	    nrf_delay_ms(BLINK_PAUSE_BETWEEN_LEDS);
         }
     }
 }
