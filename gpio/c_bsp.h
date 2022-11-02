@@ -29,6 +29,8 @@
 #define BUTTON_PULL      NRF_GPIO_PIN_PULLUP
 #define BUTTON_ACTIVE_STATE 0
 
+#define USER_BUTTON_IDX  0
+
 void c_bsp_board_init(void);
 void c_bsp_board_led_invert(size_t led_idx);
 int c_bsp_board_button_state_get(size_t button_idx);
