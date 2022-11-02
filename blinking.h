@@ -14,9 +14,9 @@ struct blinking_iter_info
   uint32_t delay;
 };
 
-typedef struct blinking_iter_info blinking_series[];
+typedef struct blinking_iter_info blinking_series_t[];
 
-size_t repeated_serial_led_blinking(blinking_series series,
+size_t repeated_serial_led_blinking(blinking_series_t series,
                                     int blinks_per_leds[LEDS_NUMBER]);
 
 #endif

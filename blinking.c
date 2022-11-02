@@ -4,7 +4,7 @@
 
 #include "blinking.h"
 
-size_t repeated_serial_led_blinking(blinking_series series,
+size_t repeated_serial_led_blinking(blinking_series_t series,
                                     int blinks_per_leds[LEDS_NUMBER])
 {
   size_t iter_idx = 0;
