@@ -12,7 +12,7 @@ struct blinking_iter_info series[LEDS_NUMBER * (DEVICE_ID_RADIX - 1)];
 
 void wait_until_button_is_pressed()
 {
-  while (!c_bsp_board_button_state_get(0))
+  while (!c_bsp_board_button_state_get(USER_BUTTON_IDX))
     ;
 }
 
