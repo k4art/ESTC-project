@@ -15,26 +15,26 @@ size_t repeated_serial_led_blinking(blinking_series_t series,
 
     if (blinks == 0 && iter_idx > 0)
     {
-      series[iter_idx - 1].delay += BLINKS_DELAY_BETWEEN_LEDS;
+      series[iter_idx - 1].delay_ms += BLINKS_DELAY_BETWEEN_LEDS_MS;
       continue;
     }
 
     for (size_t b = 0; b < blinks; b++)
     {
       series[iter_idx].led = led_id;
-      series[iter_idx++].delay = BLINKS_BLINK_DURATION;
+      series[iter_idx++].delay_ms = BLINKS_BLINK_DURATION_MS;
 
       series[iter_idx].led = led_id;
-      series[iter_idx++].delay = BLINKS_DELAY_BETWEEN_BLINKS;
+      series[iter_idx++].delay_ms = BLINKS_DELAY_BETWEEN_BLINKS_MS;
     }
 
     if (iter_idx > 0)
     {
-      series[iter_idx - 1].delay = BLINKS_DELAY_BETWEEN_LEDS;
+      series[iter_idx - 1].delay_ms = BLINKS_DELAY_BETWEEN_LEDS_MS;
     }
   }
 
-  series[iter_idx - 1].delay = BLINKS_DELAY_BETWEEN_SERIESES;
+  series[iter_idx - 1].delay_ms = BLINKS_DELAY_BETWEEN_SERIESES_MS;
 
   return iter_idx;
 }

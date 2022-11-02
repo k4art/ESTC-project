@@ -31,7 +31,7 @@ int main(void)
       wait_until_button_is_pressed();
 
       c_bsp_board_led_invert(blinking.led);
-      nrf_delay_ms(blinking.delay);
+      nrf_delay_ms(blinking.delay_ms);
     }
   }
 
