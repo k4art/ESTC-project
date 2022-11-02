@@ -10,7 +10,7 @@
 
 struct blinking_iter_info
 {
-  char led;
+  uint8_t led;
   uint32_t delay;
 };
 
