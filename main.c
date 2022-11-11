@@ -1,47 +1,38 @@
-#include <stdbool.h>
 #include <stdint.h>
-#include "nrf_delay.h"
-#include "boards.h"
+#include <stdbool.h>
 
-#define BLINK_DURATION 300
-#define BLINK_PERIOD   500
+#include "gpio/c_bsp.h"
+#include "blinking.h"
 
-#define BLINK_PAUSE_BETWEEN_LEDS 1000
+#define DEVICE_ID_RADIX 10
 
-void blink_led(int led_id)
+struct blinking_iter_info series[LEDS_NUMBER * (DEVICE_ID_RADIX - 1)];
+
+void wait_until_button_is_pressed()
 {
-    bsp_board_led_invert(led_id);
-    nrf_delay_ms(BLINK_DURATION);
-    bsp_board_led_invert(led_id);
+  while (!c_bsp_board_button_state_get(USER_BUTTON_IDX))
+    ;
 }
-
-void blink_led_many(int led_id, int blink_count)
-{
-    if (blink_count == 0) return;
-
-    for (int i = 0; i < blink_count - 1; i++)
-    {
-        blink_led(led_id);
-        nrf_delay_ms(BLINK_PERIOD - BLINK_DURATION);
-    }
-
-    blink_led(led_id);
-}
-
-// Device ID is 7202
-const int BLINKS[LEDS_NUMBER] = { 7, 2, 0, 2 };
 
 int main(void)
 {
-    bsp_board_init(BSP_INIT_LEDS);
+  size_t total_iters = repeated_serial_led_blinking(series, DEVICE_ID);
 
-    while (true)
+  c_bsp_board_init();
+
+  while (true)
+  {
+    for (size_t iter_idx = 0; iter_idx < total_iters; iter_idx++)
     {
-        for (int i = 0; i < LEDS_NUMBER; i++)
-        {
-	    blink_led_many(i, BLINKS[i]);
-	    nrf_delay_ms(BLINK_PAUSE_BETWEEN_LEDS);
-        }
+      struct blinking_iter_info blinking = series[iter_idx];
+
+      wait_until_button_is_pressed();
+
+      c_bsp_board_led_invert(blinking.led);
+      nrf_delay_ms(blinking.delay_ms);
     }
+  }
+
+  return 0;
 }
 
