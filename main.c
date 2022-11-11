@@ -20,7 +20,7 @@ struct blinking_iter_info series[LEDS_NUMBER * (DEVICE_ID_RADIX - 1)];
 
 volatile bool g_blinking_should_proceed = false;
 
-static void toggle_button_state(uint8_t pin)
+static void toggle_should_proceed_flag(uint8_t pin)
 {
   (void) pin;
 
@@ -80,7 +80,7 @@ static void initialize(void)
   err_code = xbutton_enable(USER_BUTTON_IDX, true);
   NRFX_ASSERT(err_code == NRFX_SUCCESS);
 
-  xbutton_on_click(USER_BUTTON_IDX, toggle_button_state);
+  xbutton_on_click(USER_BUTTON_IDX, toggle_should_proceed_flag);
 }
 
 int main(void)
