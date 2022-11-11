@@ -1,6 +1,7 @@
 #ifndef __BLINKING_H
 #define __BLINKING_H
 
+#include "gpio/c_bsp.h"
 #include "nrf_delay.h"
 
 #define BLINKS_DELAY_BETWEEN_SERIESES_MS 2000
