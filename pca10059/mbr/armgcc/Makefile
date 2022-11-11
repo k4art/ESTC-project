@@ -15,6 +15,9 @@ $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
 
 # Source files common to all targets
 SRC_FILES += \
+  $(PROJ_DIR)/blinking.c \
+  $(PROJ_DIR)/gpio/c_bsp.c \
+  $(PROJ_DIR)/main.c \
   $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
   $(SDK_ROOT)/components/boards/boards.c \
   $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_clock.c \
@@ -63,9 +66,7 @@ SRC_FILES += \
   $(SDK_ROOT)/external/fprintf/nrf_fprintf.c \
   $(SDK_ROOT)/external/fprintf/nrf_fprintf_format.c \
   $(SDK_ROOT)/external/utf_converter/utf.c \
-  $(PROJ_DIR)/blinking.c \
-  $(PROJ_DIR)/gpio/c_bsp.c \
-  $(PROJ_DIR)/main.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_gpiote.c \
 
 # Include folders common to all targets
 INC_FOLDERS += \
