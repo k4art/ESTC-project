@@ -6,6 +6,8 @@
 
 #define DEVICE_ID_RADIX 10
 
+int DEVICE_ID[LEDS_NUMBER] = { 7, 2, 0, 2 };
+
 struct blinking_iter_info series[LEDS_NUMBER * (DEVICE_ID_RADIX - 1)];
 
 void wait_until_button_is_pressed()
