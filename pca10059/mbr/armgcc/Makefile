@@ -16,6 +16,7 @@ $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
 # Source files common to all targets
 SRC_FILES += \
   $(PROJ_DIR)/blinking.c \
+  $(PROJ_DIR)/xbutton/xbutton.c \
   $(PROJ_DIR)/gpio/c_bsp.c \
   $(PROJ_DIR)/main.c \
   $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
