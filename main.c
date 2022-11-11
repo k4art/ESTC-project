@@ -1,8 +1,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "gpio/c_bsp.h"
 #include "blinking.h"
+
+#include "gpio/c_bsp.h"
+#include "xbutton/xbutton.h"
 
 #define DEVICE_ID_RADIX 10
 
@@ -10,17 +12,41 @@ int DEVICE_ID[LEDS_NUMBER] = { 7, 2, 0, 2 };
 
 struct blinking_iter_info series[LEDS_NUMBER * (DEVICE_ID_RADIX - 1)];
 
-void wait_until_button_is_pressed()
+volatile bool g_button_is_pressed = false;
+
+static void toggle_button_state(uint8_t pin)
 {
-  while (!c_bsp_board_button_state_get(USER_BUTTON_IDX))
+  (void) pin;
+
+  g_button_is_pressed = !g_button_is_pressed;
+}
+
+static void wait_until_button_is_pressed(void)
+{
+  while (!g_button_is_pressed)
     ;
+}
+
+static void initialize(void)
+{
+  c_bsp_board_init();
+
+  nrfx_err_t err_code;
+
+  err_code = xbutton_init();
+  NRFX_ASSERT(err_code == NRFX_SUCCESS);
+
+  err_code = xbutton_enable(USER_BUTTON_IDX, true);
+  NRFX_ASSERT(err_code == NRFX_SUCCESS);
+
+  xbutton_on_click(USER_BUTTON_IDX, toggle_button_state);
 }
 
 int main(void)
 {
-  size_t total_iters = repeated_serial_led_blinking(series, DEVICE_ID);
+  initialize();
 
-  c_bsp_board_init();
+  size_t total_iters = repeated_serial_led_blinking(series, DEVICE_ID);
 
   while (true)
   {
