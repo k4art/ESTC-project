@@ -3,6 +3,12 @@
 
 #include "blinking.h"
 
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+
+#include "nrf_log_backend_usb.h"
+
 #include "gpio/c_bsp.h"
 #include "xbutton/xbutton.h"
 
@@ -12,23 +18,58 @@ int DEVICE_ID[LEDS_NUMBER] = { 7, 2, 0, 2 };
 
 struct blinking_iter_info series[LEDS_NUMBER * (DEVICE_ID_RADIX - 1)];
 
-volatile bool g_button_is_pressed = false;
+volatile bool g_blinking_should_proceed = false;
 
 static void toggle_button_state(uint8_t pin)
 {
   (void) pin;
 
-  g_button_is_pressed = !g_button_is_pressed;
+  g_blinking_should_proceed = !g_blinking_should_proceed;
+
+  NRF_LOG_INFO("Switched! Blinking is going: %d", g_blinking_should_proceed);
 }
 
-static void wait_until_button_is_pressed(void)
+static void keep_usb_connection(void)
 {
-  while (!g_button_is_pressed)
-    ;
+  LOG_BACKEND_USB_PROCESS();
+  NRF_LOG_PROCESS();
+}
+
+static void wait_ms_but_keep_usb(uint32_t delay_ms)
+{
+  const uint32_t SLEEP_DURATION_MS = 1;
+
+  uint32_t left_to_wait_ms = delay_ms;
+
+  while (left_to_wait_ms > 0)
+  {
+    keep_usb_connection();
+
+    nrf_delay_ms(SLEEP_DURATION_MS);
+    left_to_wait_ms -= SLEEP_DURATION_MS;
+  }
+}
+
+static void wait_until_blicking_should_proceed(void)
+{
+  while (!g_blinking_should_proceed)
+  {
+    keep_usb_connection();
+  }
+}
+
+static void logs_init(void)
+{
+  ret_code_t ret = NRF_LOG_INIT(NULL);
+  APP_ERROR_CHECK(ret);
+
+  NRF_LOG_DEFAULT_BACKENDS_INIT();
 }
 
 static void initialize(void)
 {
+  logs_init();
+
   c_bsp_board_init();
 
   nrfx_err_t err_code;
@@ -54,10 +95,10 @@ int main(void)
     {
       struct blinking_iter_info blinking = series[iter_idx];
 
-      wait_until_button_is_pressed();
+      wait_until_blicking_should_proceed();
 
       c_bsp_board_led_invert(blinking.led);
-      nrf_delay_ms(blinking.delay_ms);
+      wait_ms_but_keep_usb(blinking.delay_ms);
     }
   }
 
