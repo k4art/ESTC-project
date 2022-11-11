@@ -26,14 +26,24 @@
 
 #define BUTTONS_LIST     { BUTTON_1 }
 
-#define BUTTON_PULL      NRF_GPIO_PIN_PULLUP
-#define BUTTON_ACTIVE_STATE 0
+#define BUTTON_PULL           NRF_GPIO_PIN_PULLUP
+#define BUTTON_ACTIVE_STATE   0
 
 #define USER_BUTTON_IDX  0
 
+#define IS_VALID_BUTTON_IDX(button_idx) \
+  (button_idx >= 0 && button_idx < BUTTONS_NUMBER)
+
+#define IS_VALID_LED_IDX(led_idx) \
+  (led_idx >= 0 && led_idx < LEDS_NUMBER)
+
 void c_bsp_board_init(void);
-void c_bsp_board_led_invert(size_t led_idx);
-int c_bsp_board_button_state_get(size_t button_idx);
+void c_bsp_board_led_invert(uint8_t led_idx);
+
+int c_bsp_board_button_state_get(uint8_t button_idx);
+
+uint8_t c_bsp_board_pin_to_button_idx(uint32_t pin_no);
+uint32_t c_bsp_board_button_idx_to_pin(uint8_t button_idx);
 
 #endif
 
