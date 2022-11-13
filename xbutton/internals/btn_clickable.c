@@ -13,9 +13,10 @@
  * If a button is not released after this amount of time,
  * the button is considered to be long pressing.
  */
-#define MAX_CLICK_DURATION_MS 300
+#define MAX_CLICK_DURATION_MS 1000
 
-typedef enum {
+typedef enum
+{
   BUTTON_STATE_IDLE,
   BUTTON_STATE_RELEASE_WILL_CLICK,
   BUTTON_STATE_LONG_PRESSING,
@@ -27,6 +28,13 @@ typedef enum
   BUTTON_ACTION_RELEASE,
   BUTTON_ACTION_LOSE_CLICK_POSSIBILITY,
 } btn_action_t;
+
+typedef enum
+{
+  BUTTON_EVENT_PRESS,
+  BUTTON_EVENT_RELEASE,
+  BUTTON_EVENT_CLICK,
+} btn_event_t;
 
 typedef struct btn_info_s
 {
@@ -67,39 +75,39 @@ static void button_to_next_state(uint8_t button_idx,
     case BUTTON_STATE_IDLE:
       if (action == BUTTON_ACTION_PRESS)
       {
-        m_cb.btns[button_idx].state = BUTTON_STATE_RELEASE_WILL_CLICK;
-        emit_event_press(button_idx);
-
         NRF_LOG_INFO("[btn_clickable]: [%d] => state:RELEASE_WILL_CLICK", button_idx);
         NRF_LOG_INFO("[btn_clickable]: [%d] => event:PRESS", button_idx);
+
+        m_cb.btns[button_idx].state = BUTTON_STATE_RELEASE_WILL_CLICK;
+        emit_event_press(button_idx);
       }
       break;
 
     case BUTTON_STATE_RELEASE_WILL_CLICK:
       if (action == BUTTON_ACTION_RELEASE)
       {
-        m_cb.btns[button_idx].state = BUTTON_STATE_IDLE;
-        emit_event_click(button_idx);
-
         NRF_LOG_INFO("[btn_clickable]: [%d] => state:IDLE ", button_idx);
         NRF_LOG_INFO("[btn_clickable]: [%d] => event:CLICK ", button_idx);
+
+        m_cb.btns[button_idx].state = BUTTON_STATE_IDLE;
+        emit_event_click(button_idx);
       }
       else if (action == BUTTON_ACTION_LOSE_CLICK_POSSIBILITY)
       {
-        m_cb.btns[button_idx].state = BUTTON_STATE_LONG_PRESSING;
-
         NRF_LOG_INFO("[btn_clickable]: [%d] => state:LONG_PRESSING ", button_idx);
+
+        m_cb.btns[button_idx].state = BUTTON_STATE_LONG_PRESSING;
       }
       break;
 
     case BUTTON_STATE_LONG_PRESSING:
       if (action == BUTTON_ACTION_RELEASE)
       {
-        m_cb.btns[button_idx].state = BUTTON_STATE_IDLE;
-        emit_event_release(button_idx);
-
         NRF_LOG_INFO("[btn_clickable]: [%d] => event:RELEASE ", button_idx);
         NRF_LOG_INFO("[btn_clickable]: [%d] => state:IDLE ", button_idx);
+
+        m_cb.btns[button_idx].state = BUTTON_STATE_IDLE;
+        emit_event_release(button_idx);
       }
       break;
   }
@@ -112,6 +120,7 @@ static void handle_press(uint8_t button_idx, btn_debounced_state_t debounced_sta
   app_timer_start(click_timeout_timer,
                   APP_TIMER_TICKS(MAX_CLICK_DURATION_MS),
                   (void *) (uint32_t) button_idx);
+
   button_to_next_state(button_idx, BUTTON_ACTION_PRESS);
 }
 
@@ -119,6 +128,7 @@ static void handle_release(uint8_t button_idx, btn_debounced_state_t debounced_s
 {
   (void) debounced_state;
 
+  app_timer_stop(click_timeout_timer);
   button_to_next_state(button_idx, BUTTON_ACTION_RELEASE);
 }
 

@@ -11,13 +11,15 @@
   nrfx_gpiote_in_config_t var = NRFX_GPIOTE_CONFIG_IN_SENSE_ ## polarity_in_caps(hi_acc); \
   var.pull = BUTTON_PULL
 
-typedef enum {
+typedef enum
+{
   BUTTON_PHY_UP,         // normally means button is released
   BUTTON_PHY_DOWN,       // normally means button is pressed
   BUTTON_PHY_BOUNCING,   // normally means button is just started being pressed
 } btn_physical_state_t;
 
-typedef enum {
+typedef enum
+{
   BUTTON_ACTION_RELEASE,
   BUTTON_ACTION_PRESS,
   BUTTON_ACTION_DEBOUNCE_PRESSED,
@@ -101,10 +103,10 @@ static void button_to_next_state(uint8_t button_idx, btn_action_t action)
     case BUTTON_PHY_UP:
       if (action == BUTTON_ACTION_PRESS)
       {
+        NRF_LOG_INFO("[btn_debounced]: [%d] - press", button_idx);
+
         m_cb.btns[button_idx].phy_state = BUTTON_PHY_BOUNCING;
         handle_press(button_idx);
-
-        NRF_LOG_INFO("[btn_debounced]: [%d] - press", button_idx);
       }
       else { NRFX_ASSERT(false); }
       break;
@@ -112,10 +114,10 @@ static void button_to_next_state(uint8_t button_idx, btn_action_t action)
     case BUTTON_PHY_DOWN:
       if (action == BUTTON_ACTION_RELEASE)
       {
+        NRF_LOG_INFO("[btn_debounced]: [%d] - release", button_idx);
+
         m_cb.btns[button_idx].phy_state = BUTTON_PHY_UP;
         handle_release(button_idx);
-
-        NRF_LOG_INFO("[btn_debounced]: [%d] - release", button_idx);
       }
       else { NRFX_ASSERT(false); }
       break;
@@ -143,8 +145,8 @@ static void gpiote_event_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t ac
 
   if (c_bsp_board_button_state_get(button_idx) == 1)
   {
-    button_to_next_state(button_idx, BUTTON_ACTION_PRESS);
     debouncing_timer_start(button_idx);
+    button_to_next_state(button_idx, BUTTON_ACTION_PRESS);
   }
   else
   {
