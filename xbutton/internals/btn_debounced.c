@@ -96,7 +96,7 @@ static void debouncing_timer_start(uint8_t button_idx)
                   context);
 }
 
-static void button_to_next_state(uint8_t button_idx, btn_action_t action)
+static void button_fsm_next_state(uint8_t button_idx, btn_action_t action)
 {
   switch (m_cb.btns[button_idx].phy_state) // previous state
   {
@@ -146,11 +146,11 @@ static void gpiote_event_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t ac
   if (c_bsp_board_button_state_get(button_idx) == 1)
   {
     debouncing_timer_start(button_idx);
-    button_to_next_state(button_idx, BUTTON_ACTION_PRESS);
+    button_fsm_next_state(button_idx, BUTTON_ACTION_PRESS);
   }
   else
   {
-    button_to_next_state(button_idx, BUTTON_ACTION_RELEASE);
+    button_fsm_next_state(button_idx, BUTTON_ACTION_RELEASE);
   }
 }
 
@@ -198,6 +198,7 @@ nrfx_err_t btn_debounced_enable(uint8_t button_idx, bool high_accuracy)
 void btn_debounced_on_press(uint8_t btn_idx, btn_debounced_handler_t handler)
 {
   NRFX_ASSERT(btn_is_used(btn_idx));
+  NRFX_ASSERT(handler != NULL);
 
   m_cb.btns[btn_idx].on_press = handler;
 }
@@ -205,6 +206,7 @@ void btn_debounced_on_press(uint8_t btn_idx, btn_debounced_handler_t handler)
 void btn_debounced_on_release(uint8_t btn_idx, btn_debounced_handler_t handler)
 {
   NRFX_ASSERT(btn_is_used(btn_idx));
+  NRFX_ASSERT(handler != NULL);
 
   m_cb.btns[btn_idx].on_release = handler;
 }

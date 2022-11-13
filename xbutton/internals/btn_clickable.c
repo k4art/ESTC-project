@@ -26,7 +26,7 @@ typedef enum
 {
   BUTTON_ACTION_PRESS,
   BUTTON_ACTION_RELEASE,
-  BUTTON_ACTION_LOSE_CLICK_POSSIBILITY,
+  BUTTON_ACTION_CLICK_INTENT_TIMEOUT,
 } btn_action_t;
 
 typedef enum
@@ -67,7 +67,7 @@ EMIT_EVENT_DEF(press)
 EMIT_EVENT_DEF(release)
 EMIT_EVENT_DEF(click)
 
-static void button_to_next_state(uint8_t button_idx,
+static void button_fsm_next_state(uint8_t button_idx,
                                  btn_action_t action)
 {
   switch (m_cb.btns[button_idx].state)
@@ -92,7 +92,7 @@ static void button_to_next_state(uint8_t button_idx,
         m_cb.btns[button_idx].state = BUTTON_STATE_IDLE;
         emit_event_click(button_idx);
       }
-      else if (action == BUTTON_ACTION_LOSE_CLICK_POSSIBILITY)
+      else if (action == BUTTON_ACTION_CLICK_INTENT_TIMEOUT)
       {
         NRF_LOG_INFO("[btn_clickable]: [%d] => state:LONG_PRESSING ", button_idx);
 
@@ -121,7 +121,7 @@ static void handle_press(uint8_t button_idx, btn_debounced_state_t debounced_sta
                   APP_TIMER_TICKS(MAX_CLICK_DURATION_MS),
                   (void *) (uint32_t) button_idx);
 
-  button_to_next_state(button_idx, BUTTON_ACTION_PRESS);
+  button_fsm_next_state(button_idx, BUTTON_ACTION_PRESS);
 }
 
 static void handle_release(uint8_t button_idx, btn_debounced_state_t debounced_state)
@@ -129,12 +129,12 @@ static void handle_release(uint8_t button_idx, btn_debounced_state_t debounced_s
   (void) debounced_state;
 
   app_timer_stop(click_timeout_timer);
-  button_to_next_state(button_idx, BUTTON_ACTION_RELEASE);
+  button_fsm_next_state(button_idx, BUTTON_ACTION_RELEASE);
 }
 
 static void handle_click_timeout_timer(void * context)
 {
-  button_to_next_state((uint32_t) context, BUTTON_ACTION_LOSE_CLICK_POSSIBILITY);
+  button_fsm_next_state((uint32_t) context, BUTTON_ACTION_CLICK_INTENT_TIMEOUT);
 }
 
 void btn_clickable_init(void)
@@ -165,6 +165,7 @@ nrfx_err_t btn_clickable_enable(uint8_t button_idx, bool high_accuracy)
   void btn_clickable_on_ ## event (uint8_t button_idx,              \
                                    btn_clickable_handler_t handler) \
   {                                                                 \
+    NRFX_ASSERT(handler != NULL)                                    \
     NRFX_ASSERT(btn_debounced_is_enabled_for(button_idx));          \
     m_cb.btns[button_idx].on_ ## event = handler;                   \
   }
