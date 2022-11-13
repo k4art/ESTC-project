@@ -18,7 +18,7 @@ int DEVICE_ID[LEDS_NUMBER] = { 7, 2, 0, 2 };
 
 struct blinking_iter_info series[LEDS_NUMBER * (DEVICE_ID_RADIX - 1)];
 
-volatile bool g_blinking_should_proceed = false;
+volatile bool g_blinking_should_proceed;
 
 static void toggle_should_proceed_flag(uint8_t pin)
 {
@@ -71,13 +71,9 @@ static void initialize(void)
   logs_init();
 
   c_bsp_board_init();
+  xbutton_init();
 
-  nrfx_err_t err_code;
-
-  err_code = xbutton_init();
-  NRFX_ASSERT(err_code == NRFX_SUCCESS);
-
-  err_code = xbutton_enable(USER_BUTTON_IDX, true);
+  nrfx_err_t err_code = xbutton_enable(USER_BUTTON_IDX, true);
   NRFX_ASSERT(err_code == NRFX_SUCCESS);
 
   xbutton_on_click(USER_BUTTON_IDX, toggle_should_proceed_flag);

@@ -26,8 +26,9 @@
 
 #define BUTTONS_LIST     { BUTTON_1 }
 
-#define BUTTON_PULL           NRF_GPIO_PIN_PULLUP
-#define BUTTON_ACTIVE_STATE   0
+#define BUTTON_PULL             NRF_GPIO_PIN_PULLUP
+#define BUTTON_ACTIVE_STATE     0
+#define BUTTON_BOUNCING_TIME_MS 50
 
 #define USER_BUTTON_IDX  0
 
