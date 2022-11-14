@@ -1,9 +1,9 @@
 #include "app_timer.h"
+#include "nrfx_gpiote.h"
+#include "nrf_log.h"
 
 #include "gpio/c_bsp.h"
-#include "nrfx_gpiote.h"
-
-#include "nrf_log.h"
+#include "utils.h"
 
 #include "btn_debounced.h"
 
@@ -11,12 +11,28 @@
   nrfx_gpiote_in_config_t var = NRFX_GPIOTE_CONFIG_IN_SENSE_ ## polarity_in_caps(hi_acc); \
   var.pull = BUTTON_PULL
 
+/*
+ * State Transitions and Events Triggering:
+ * |----------------|------------|---------|------------------|-------------------|
+ * | State \ Action | PRESS      | RELEASE | DEBOUNCE_PRESSED | DEBOUNCE_RELEASED |
+ * |----------------|------------|---------|------------------|-------------------|
+ * | UP             | DEBOUNCING | Assert  | Assert           | Assert            |
+ * |                | PRESS      |         |                  |                   |
+ * |----------------|------------|---------|------------------|-------------------|
+ * | DOWN           | Assert     | UP      | Assert           | Assert            |
+ * |                |            | RELEASE |                  |                   |
+ * |----------------|------------|---------|------------------|-------------------|
+ * | DEBOUNCING     | Ignored    | Ignored | DOWN             | UP                |
+ * |                |            |         |                  | RELEASE           |
+ * |----------------|------------|---------|------------------|-------------------|
+ */
+
 typedef enum
 {
-  BUTTON_PHY_UP,         // normally means button is released
-  BUTTON_PHY_DOWN,       // normally means button is pressed
-  BUTTON_PHY_BOUNCING,   // normally means button is just started being pressed
-} btn_physical_state_t;
+  BUTTON_STATE_UP,
+  BUTTON_STATE_DOWN,
+  BUTTON_STATE_DEBOUNCING,
+} btn_state_t;
 
 typedef enum
 {
@@ -26,11 +42,16 @@ typedef enum
   BUTTON_ACTION_DEBOUNCE_RELEASED,
 } btn_action_t;
 
+typedef enum
+{
+  BUTTON_EVENT_PRESS,
+  BUTTON_EVENT_RELEASE,
+} btn_event_t;
+
 typedef struct btn_info_s
 {
   bool is_used;
-  btn_physical_state_t phy_state;
-  btn_debounced_state_t debounced_state;
+  btn_state_t state;
   btn_debounced_handler_t on_press;
   btn_debounced_handler_t on_release;
 } btn_info_t;
@@ -51,23 +72,58 @@ static bool btn_is_used(uint8_t button_idx)
   return m_cb.btns[button_idx].is_used;
 }
 
-static void handle_press(uint8_t button_idx)
+static void emit_event(uint8_t button_idx, btn_event_t event)
 {
-  m_cb.btns[button_idx].debounced_state = BUTTON_PRESSED;
-
-  if (m_cb.btns[button_idx].on_press != NULL)
+  switch (event)
   {
-    m_cb.btns[button_idx].on_press(button_idx, BUTTON_PRESSED);
+    case BUTTON_EVENT_PRESS:
+      CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_press, button_idx);
+      break;
+
+    case BUTTON_EVENT_RELEASE:
+      CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_release, button_idx);
+      break;
   }
 }
 
-static void handle_release(uint8_t button_idx)
+static void button_fsm_next_state(uint8_t button_idx, btn_action_t action)
 {
-  m_cb.btns[button_idx].debounced_state = BUTTON_RELEASED;
-
-  if (m_cb.btns[button_idx].on_release != NULL)
+  switch (m_cb.btns[button_idx].state) // previous state
   {
-    m_cb.btns[button_idx].on_release(button_idx, BUTTON_RELEASED);
+    case BUTTON_STATE_UP:
+      if (action == BUTTON_ACTION_PRESS)
+      {
+        NRF_LOG_INFO("[btn_debounced]: [%d] - press", button_idx);
+
+        m_cb.btns[button_idx].state = BUTTON_STATE_DEBOUNCING;
+        emit_event(button_idx, BUTTON_EVENT_PRESS);
+      }
+      else { NRFX_ASSERT(false); }
+      break;
+
+    case BUTTON_STATE_DOWN:
+      if (action == BUTTON_ACTION_RELEASE)
+      {
+        NRF_LOG_INFO("[btn_debounced]: [%d] - release", button_idx);
+
+        m_cb.btns[button_idx].state = BUTTON_STATE_UP;
+        emit_event(button_idx, BUTTON_EVENT_RELEASE);
+      }
+      else { NRFX_ASSERT(false); }
+      break;
+
+    case BUTTON_STATE_DEBOUNCING:
+      if (action == BUTTON_ACTION_DEBOUNCE_PRESSED)
+      {
+        m_cb.btns[button_idx].state = BUTTON_STATE_DOWN;
+      }
+      else if (action == BUTTON_ACTION_DEBOUNCE_RELEASED)
+      {
+        m_cb.btns[button_idx].state = BUTTON_STATE_UP;
+        emit_event(button_idx, BUTTON_EVENT_RELEASE);
+      }
+      else { NRFX_ASSERT(false); }
+      break;
   }
 }
 
@@ -77,13 +133,11 @@ static void debouncing_timer_handler(void * context)
 
   if (c_bsp_board_button_state_get(button_idx) == 1)
   {
-    // button is still being pressed
-    m_cb.btns[button_idx].phy_state = BUTTON_PHY_DOWN;
+    button_fsm_next_state(button_idx, BUTTON_ACTION_DEBOUNCE_PRESSED);
   }
   else
   {
-    m_cb.btns[button_idx].phy_state = BUTTON_PHY_UP;
-    handle_release(button_idx);
+    button_fsm_next_state(button_idx, BUTTON_ACTION_DEBOUNCE_RELEASED);
   }
 }
 
@@ -94,47 +148,6 @@ static void debouncing_timer_start(uint8_t button_idx)
   app_timer_start(m_debouncing_timer,
                   APP_TIMER_TICKS(BUTTON_BOUNCING_TIME_MS),
                   context);
-}
-
-static void button_fsm_next_state(uint8_t button_idx, btn_action_t action)
-{
-  switch (m_cb.btns[button_idx].phy_state) // previous state
-  {
-    case BUTTON_PHY_UP:
-      if (action == BUTTON_ACTION_PRESS)
-      {
-        NRF_LOG_INFO("[btn_debounced]: [%d] - press", button_idx);
-
-        m_cb.btns[button_idx].phy_state = BUTTON_PHY_BOUNCING;
-        handle_press(button_idx);
-      }
-      else { NRFX_ASSERT(false); }
-      break;
-
-    case BUTTON_PHY_DOWN:
-      if (action == BUTTON_ACTION_RELEASE)
-      {
-        NRF_LOG_INFO("[btn_debounced]: [%d] - release", button_idx);
-
-        m_cb.btns[button_idx].phy_state = BUTTON_PHY_UP;
-        handle_release(button_idx);
-      }
-      else { NRFX_ASSERT(false); }
-      break;
-
-    case BUTTON_PHY_BOUNCING:
-      if (action == BUTTON_ACTION_DEBOUNCE_PRESSED)
-      {
-        m_cb.btns[button_idx].phy_state = BUTTON_PHY_DOWN;
-      }
-      else if (action == BUTTON_ACTION_DEBOUNCE_RELEASED)
-      {
-        m_cb.btns[button_idx].phy_state = BUTTON_PHY_UP;
-        handle_release(button_idx);
-      }
-      else { NRFX_ASSERT(false); }
-      break;
-  }
 }
 
 static void gpiote_event_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
@@ -209,13 +222,6 @@ void btn_debounced_on_release(uint8_t btn_idx, btn_debounced_handler_t handler)
   NRFX_ASSERT(handler != NULL);
 
   m_cb.btns[btn_idx].on_release = handler;
-}
-
-btn_debounced_state_t btn_debounced_get_state(uint8_t btn_idx)
-{
-  NRFX_ASSERT(btn_is_used(btn_idx));
-
-  return m_cb.btns[btn_idx].debounced_state;
 }
 
 bool btn_debounced_is_enabled_for(uint8_t button_idx)

@@ -13,6 +13,7 @@ void blinking_repeated_serial_led_init(blinking_series_t * series,
                                        const uint8_t blinks_per_leds[LEDS_NUMBER])
 {
   size_t blink_idx = 0;
+
   for (size_t led_idx = 0; led_idx < LEDS_NUMBER; led_idx++)
   {
     for (uint8_t i = 0; i < blinks_per_leds[led_idx]; i++)
@@ -50,7 +51,7 @@ bool blinking_pwm_lighting(blinking_pwm_context_t * context)
 {
   NRFX_ASSERT(IS_VALID_LED_IDX(context->led_idx));
 
-  if (nrfx_systick_test(&context->last_systick_state, context->next_waiting_time_us))
+  if (nrfx_systick_test(&context->last_systick_state, context->waiting_time_us))
   {
     nrfx_systick_get(&context->last_systick_state);
 
@@ -59,14 +60,14 @@ bool blinking_pwm_lighting(blinking_pwm_context_t * context)
 
     if (context->is_time_on)
     {
-      context->next_waiting_time_us = pwm_calc_time_on_us(context);
+      context->waiting_time_us = pwm_calc_time_on_us(context);
     }
     else
     {
-      context->next_waiting_time_us = PWM_PERIOD_US - pwm_calc_time_on_us(context);
+      context->waiting_time_us = PWM_PERIOD_US - pwm_calc_time_on_us(context);
     }
 
-    return context->is_time_on == false;
+    return !context->is_time_on;
   }
 
   return false;

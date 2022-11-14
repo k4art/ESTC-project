@@ -2,12 +2,26 @@
 #include "nrf_log.h"
 
 #include "gpio/c_bsp.h"
+#include "utils.h"
 
 #include "internals/btn_clickable.h"
 
 #include "xbutton.h"
 
 #define DOUBLE_CLICK_MAX_SECOND_CLICK_WAITING_TIME_MS 400
+
+/*
+ * State Transitions and Events Triggering:
+ * |-----------------------------|-----------------------------|-----------------------------|
+ * | State \ Action              | RAW_CLICK                   | DOUBLE_CLICK_INTENT_TIMEOUT |
+ * |-----------------------------|-----------------------------|-----------------------------|
+ * | NEUTRAL                     | WAITING_DOUBLE_CLICK_INTENT | NEUTRAL                     |
+ * |                             | none                        | CLICK                       |
+ * |-----------------------------|-----------------------------|-----------------------------|
+ * | WAITING_DOUBLE_CLICK_INTENT | NEUTRAL                     | NEUTRAL                     |
+ * |                             | DOUBLE_CLICK                | none                        |
+ * |-----------------------------|-----------------------------|-----------------------------|
+ */
 
 typedef enum
 {
@@ -44,9 +58,6 @@ typedef struct xbutton_control_block_s
 static xbutton_control_block_t m_cb;
 
 APP_TIMER_DEF(m_double_click_timeout_timer);
-
-#define CALL_IF_NOT_NULL(fn, ...) \
-  if (fn != NULL) fn(__VA_ARGS__)
 
 static bool btn_is_used(uint8_t button_idx)
 {

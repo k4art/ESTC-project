@@ -43,7 +43,7 @@ typedef struct blinking_pwm_context_s
   int16_t duty_cycle_thousandths_per_cycle;
   uint16_t duty_cycle_thousandths; // 0 to 1000
   nrfx_systick_state_t last_systick_state;
-  uint32_t next_waiting_time_us;
+  uint32_t waiting_time_us;
 } blinking_pwm_context_t;
 
 #define BLINKING_PWM_CONTEXT_START(led_index,                     \
@@ -52,7 +52,7 @@ typedef struct blinking_pwm_context_s
   .led_idx = led_index,                                           \
   .duty_cycle_thousandths_per_cycle = step_thousandths_per_cycle, \
   .duty_cycle_thousandths = DUTY_CYCLE_ZERO,                      \
-  .next_waiting_time_us = 0,                                      \
+  .waiting_time_us = 0,                                      \
   .is_time_on = 0,                                                \
 }
 

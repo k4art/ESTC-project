@@ -1,10 +1,11 @@
-#include "btn_debounced.h"
-
 #include "app_timer.h"
-#include "nrfx_gpiote.h"
-#include "gpio/c_bsp.h"
-
 #include "nrf_log.h"
+#include "nrfx_gpiote.h"
+
+#include "gpio/c_bsp.h"
+#include "utils.h"
+
+#include "btn_debounced.h"
 
 #include "btn_clickable.h"
 
@@ -13,14 +14,30 @@
  * If a button is not released after this amount of time,
  * the button is considered to be long pressing.
  */
-#define MAX_CLICK_DURATION_MS 1000
+#define MAX_CLICK_DURATION_MS 500
+
+/*
+ * State Transitions and Events Triggering:
+ * |----------------------|----------------------|------------------|----------------------|
+ * | State \ Action       | PRESS                | RELEASE          | CLICK_INTENT_TIMEOUT |
+ * |----------------------|----------------------|------------------|----------------------|
+ * | NEUTRAL              | WAITING_CLICK_INTENT | Ignored          | Ignored              |
+ * |                      | PRESS                |                  |                      |
+ * |----------------------|----------------------|------------------|----------------------|
+ * | WAITING_CLICK_INTENT | Ignored              | NEUTRAL          | LONG_PRESSING        |
+ * |                      |                      | RELEASE, CLICK   | none                 |
+ * |----------------------|----------------------|------------------|----------------------|
+ * | LONG_PRESSING        | Ignored              | NEUTRAL          | Ignored              |
+ * |                      |                      | RELEASE          |                      |
+ * |----------------------|----------------------|------------------|----------------------|
+ */
 
 typedef enum
 {
-  BUTTON_STATE_IDLE,
-  BUTTON_STATE_RELEASE_WILL_CLICK,
+  BUTTON_STATE_NEUTRAL,
+  BUTTON_STATE_WAITING_CLICK_INTENT,
   BUTTON_STATE_LONG_PRESSING,
-} btn_clickable_state_t;
+} btn_state_t;
 
 typedef enum
 {
@@ -38,7 +55,7 @@ typedef enum
 
 typedef struct btn_info_s
 {
-  btn_clickable_state_t state;
+  btn_state_t state;
 
   btn_clickable_handler_t on_press;
   btn_clickable_handler_t on_release;
@@ -54,48 +71,51 @@ static btn_clickable_control_block_t m_cb;
 
 APP_TIMER_DEF(click_timeout_timer);
 
-#define EMIT_EVENT_DEF(event)                                 \
-  static void emit_event_ ## event (uint8_t button_idx)       \
-  {                                                           \
-    if (m_cb.btns[button_idx].on_ ## event != NULL)           \
-    {                                                         \
-      m_cb.btns[button_idx].on_ ## event (button_idx);        \
-    }                                                         \
-  }
+static void emit_event(uint8_t button_idx, btn_event_t event)
+{
+  switch (event)
+  {
+    case BUTTON_EVENT_PRESS:
+      NRF_LOG_INFO("[btn_clickable]: [%d] => event:PRESS", button_idx);
+      CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_press, button_idx);
+      break;
 
-EMIT_EVENT_DEF(press)
-EMIT_EVENT_DEF(release)
-EMIT_EVENT_DEF(click)
+    case BUTTON_EVENT_RELEASE:
+      NRF_LOG_INFO("[btn_clickable]: [%d] => event:RELEASE ", button_idx);
+      CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_release, button_idx);
+      break;
+
+    case BUTTON_EVENT_CLICK:
+      NRF_LOG_INFO("[btn_clickable]: [%d] => event:CLICK ", button_idx);
+      CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_click, button_idx);
+      break;
+  }
+}
 
 static void button_fsm_next_state(uint8_t button_idx,
                                  btn_action_t action)
 {
   switch (m_cb.btns[button_idx].state)
   {
-    case BUTTON_STATE_IDLE:
+    case BUTTON_STATE_NEUTRAL:
       if (action == BUTTON_ACTION_PRESS)
       {
-        NRF_LOG_INFO("[btn_clickable]: [%d] => state:RELEASE_WILL_CLICK", button_idx);
-        NRF_LOG_INFO("[btn_clickable]: [%d] => event:PRESS", button_idx);
+        m_cb.btns[button_idx].state = BUTTON_STATE_WAITING_CLICK_INTENT;
 
-        m_cb.btns[button_idx].state = BUTTON_STATE_RELEASE_WILL_CLICK;
-        emit_event_press(button_idx);
+        emit_event(button_idx, BUTTON_EVENT_PRESS);
       }
       break;
 
-    case BUTTON_STATE_RELEASE_WILL_CLICK:
+    case BUTTON_STATE_WAITING_CLICK_INTENT:
       if (action == BUTTON_ACTION_RELEASE)
       {
-        NRF_LOG_INFO("[btn_clickable]: [%d] => state:IDLE ", button_idx);
-        NRF_LOG_INFO("[btn_clickable]: [%d] => event:CLICK ", button_idx);
+        m_cb.btns[button_idx].state = BUTTON_STATE_NEUTRAL;
 
-        m_cb.btns[button_idx].state = BUTTON_STATE_IDLE;
-        emit_event_click(button_idx);
+        emit_event(button_idx, BUTTON_EVENT_RELEASE);
+        emit_event(button_idx, BUTTON_EVENT_CLICK);
       }
       else if (action == BUTTON_ACTION_CLICK_INTENT_TIMEOUT)
       {
-        NRF_LOG_INFO("[btn_clickable]: [%d] => state:LONG_PRESSING ", button_idx);
-
         m_cb.btns[button_idx].state = BUTTON_STATE_LONG_PRESSING;
       }
       break;
@@ -103,20 +123,15 @@ static void button_fsm_next_state(uint8_t button_idx,
     case BUTTON_STATE_LONG_PRESSING:
       if (action == BUTTON_ACTION_RELEASE)
       {
-        NRF_LOG_INFO("[btn_clickable]: [%d] => event:RELEASE ", button_idx);
-        NRF_LOG_INFO("[btn_clickable]: [%d] => state:IDLE ", button_idx);
-
-        m_cb.btns[button_idx].state = BUTTON_STATE_IDLE;
-        emit_event_release(button_idx);
+        m_cb.btns[button_idx].state = BUTTON_STATE_NEUTRAL;
+        emit_event(button_idx, BUTTON_EVENT_RELEASE);
       }
       break;
   }
 }
 
-static void handle_press(uint8_t button_idx, btn_debounced_state_t debounced_state)
+static void handle_press(uint8_t button_idx)
 {
-  (void) debounced_state;
-
   app_timer_start(click_timeout_timer,
                   APP_TIMER_TICKS(MAX_CLICK_DURATION_MS),
                   (void *) (uint32_t) button_idx);
@@ -124,11 +139,10 @@ static void handle_press(uint8_t button_idx, btn_debounced_state_t debounced_sta
   button_fsm_next_state(button_idx, BUTTON_ACTION_PRESS);
 }
 
-static void handle_release(uint8_t button_idx, btn_debounced_state_t debounced_state)
+static void handle_release(uint8_t button_idx)
 {
-  (void) debounced_state;
-
   app_timer_stop(click_timeout_timer);
+
   button_fsm_next_state(button_idx, BUTTON_ACTION_RELEASE);
 }
 
