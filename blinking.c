@@ -1,40 +1,105 @@
 #include "nrf_delay.h"
+#include "nrf_log.h"
 
 #include "gpio/c_bsp.h"
 
 #include "blinking.h"
 
-size_t repeated_serial_led_blinking(blinking_series_t series,
-                                    int blinks_per_leds[LEDS_NUMBER])
+#define PWM_FREQUENCE_HZ 1000
+
+const uint32_t PWM_PERIOD_US = 1000000 / PWM_FREQUENCE_HZ;
+
+void blinking_repeated_serial_led_init(blinking_series_t * series,
+                                       const uint8_t blinks_per_leds[LEDS_NUMBER])
 {
-  size_t iter_idx = 0;
-
-  for (size_t led_id = 0; led_id < LEDS_NUMBER; led_id++)
+  size_t blink_idx = 0;
+  for (size_t led_idx = 0; led_idx < LEDS_NUMBER; led_idx++)
   {
-    size_t blinks = blinks_per_leds[led_id];
-
-    if (blinks == 0 && iter_idx > 0)
+    for (uint8_t i = 0; i < blinks_per_leds[led_idx]; i++)
     {
-      series[iter_idx - 1].delay_ms += BLINKS_DELAY_BETWEEN_LEDS_MS;
-      continue;
-    }
-
-    for (size_t b = 0; b < blinks; b++)
-    {
-      series[iter_idx].led = led_id;
-      series[iter_idx++].delay_ms = BLINKS_BLINK_DURATION_MS;
-
-      series[iter_idx].led = led_id;
-      series[iter_idx++].delay_ms = BLINKS_DELAY_BETWEEN_BLINKS_MS;
-    }
-
-    if (iter_idx > 0)
-    {
-      series[iter_idx - 1].delay_ms = BLINKS_DELAY_BETWEEN_LEDS_MS;
+      series->blinks[blink_idx++] = (blink_t) { .led_idx = led_idx };
     }
   }
 
-  series[iter_idx - 1].delay_ms = BLINKS_DELAY_BETWEEN_SERIESES_MS;
+  series->length = blink_idx;
+}
 
-  return iter_idx;
+static bool pwm_reached_pick(blinking_pwm_context_t * context)
+{
+  return context->duty_cycle_thousandths >= DUTY_CYCLE_PICK
+    && context->duty_cycle_thousandths_per_cycle > 0;
+}
+
+static bool pwm_reached_end(blinking_pwm_context_t * context)
+{
+  return context->duty_cycle_thousandths <= DUTY_CYCLE_ZERO
+    && context->duty_cycle_thousandths_per_cycle < 0;
+}
+
+static uint32_t pwm_calc_time_on_us(blinking_pwm_context_t * context)
+{
+  return PWM_PERIOD_US * context->duty_cycle_thousandths / 1000;
+}
+
+void blinking_pwm_init(void)
+{
+  nrfx_systick_init();
+}
+
+bool blinking_pwm_lighting(blinking_pwm_context_t * context)
+{
+  NRFX_ASSERT(IS_VALID_LED_IDX(context->led_idx));
+
+  if (nrfx_systick_test(&context->last_systick_state, context->next_waiting_time_us))
+  {
+    nrfx_systick_get(&context->last_systick_state);
+
+    c_bsp_board_led_invert(context->led_idx);
+    context->is_time_on = !context->is_time_on;
+
+    if (context->is_time_on)
+    {
+      context->next_waiting_time_us = pwm_calc_time_on_us(context);
+    }
+    else
+    {
+      context->next_waiting_time_us = PWM_PERIOD_US - pwm_calc_time_on_us(context);
+    }
+
+    return context->is_time_on == false;
+  }
+
+  return false;
+}
+
+blinking_pwm_status_t blinking_pwm_update(blinking_pwm_context_t * context)
+{
+  NRFX_ASSERT(IS_VALID_LED_IDX(context->led_idx));
+
+  NRFX_ASSERT(!pwm_reached_pick(context));
+  NRFX_ASSERT(!pwm_reached_end(context));
+
+  NRFX_ASSERT(context->duty_cycle_thousandths_per_cycle != 0);
+
+  context->duty_cycle_thousandths += context->duty_cycle_thousandths_per_cycle;
+
+  if (pwm_reached_pick(context))
+  {
+    NRF_LOG_INFO("[blinking]: (%d) pwm reached pick.", context->led_idx);
+
+    context->duty_cycle_thousandths_per_cycle = -context->duty_cycle_thousandths_per_cycle;
+    context->duty_cycle_thousandths = DUTY_CYCLE_PICK;
+
+    return BLINKING_PWM_REACHED_PICK;
+  }
+
+  if (pwm_reached_end(context)) {
+    NRF_LOG_INFO("[blinking]: (%d) pwm reached end.", context->led_idx);
+
+    context->duty_cycle_thousandths = DUTY_CYCLE_ZERO;
+
+    return BLINKING_PWM_ENDED;
+  }
+
+  return BLINKING_PWM_IN_PROGRESS;
 }

@@ -2,6 +2,7 @@
 #include <stdbool.h>
 
 #include "blinking.h"
+#include "nrfx_systick.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -14,48 +15,25 @@
 
 #define DEVICE_ID_RADIX 10
 
-int DEVICE_ID[LEDS_NUMBER] = { 7, 2, 0, 2 };
+uint8_t DEVICE_ID[LEDS_NUMBER] = { 7, 2, 0, 2 };
 
-struct blinking_iter_info series[LEDS_NUMBER * (DEVICE_ID_RADIX - 1)];
+BLINKING_SERIES_WITH_CAPACITY_DEF(series, LEDS_NUMBER * (DEVICE_ID_RADIX - 1));
 
-volatile bool g_blinking_should_proceed;
+volatile bool g_pwm_freeze;
 
 static void toggle_should_proceed_flag(uint8_t pin)
 {
   (void) pin;
 
-  g_blinking_should_proceed = !g_blinking_should_proceed;
+  g_pwm_freeze = !g_pwm_freeze;
 
-  NRF_LOG_INFO("Switched! Blinking is going: %d", g_blinking_should_proceed);
+  NRF_LOG_INFO("Switched! Blinking is going: %d", g_pwm_freeze);
 }
 
 static void keep_usb_connection(void)
 {
   LOG_BACKEND_USB_PROCESS();
   NRF_LOG_PROCESS();
-}
-
-static void wait_ms_but_keep_usb(uint32_t delay_ms)
-{
-  const uint32_t SLEEP_DURATION_MS = 1;
-
-  uint32_t left_to_wait_ms = delay_ms;
-
-  while (left_to_wait_ms > 0)
-  {
-    keep_usb_connection();
-
-    nrf_delay_ms(SLEEP_DURATION_MS);
-    left_to_wait_ms -= SLEEP_DURATION_MS;
-  }
-}
-
-static void wait_until_blicking_should_proceed(void)
-{
-  while (!g_blinking_should_proceed)
-  {
-    keep_usb_connection();
-  }
 }
 
 static void logs_init(void)
@@ -72,6 +50,7 @@ static void initialize(void)
 
   c_bsp_board_init();
   xbutton_init();
+  blinking_pwm_init();
 
   nrfx_err_t err_code = xbutton_enable(USER_BUTTON_IDX, true);
   NRFX_ASSERT(err_code == NRFX_SUCCESS);
@@ -83,18 +62,29 @@ int main(void)
 {
   initialize();
 
-  size_t total_iters = repeated_serial_led_blinking(series, DEVICE_ID);
+  blinking_repeated_serial_led_init(&series, DEVICE_ID);
 
   while (true)
   {
-    for (size_t iter_idx = 0; iter_idx < total_iters; iter_idx++)
+    for (size_t blink_idx = 0; blink_idx < series.length; blink_idx++)
     {
-      struct blinking_iter_info blinking = series[iter_idx];
+      blink_t blink = series.blinks[blink_idx];
 
-      wait_until_blicking_should_proceed();
+      blinking_pwm_context_t ctx = BLINKING_PWM_CONTEXT_START(blink.led_idx, 2);
+      blinking_pwm_status_t pwm_status = BLINKING_PWM_IN_PROGRESS;
 
-      c_bsp_board_led_invert(blinking.led);
-      wait_ms_but_keep_usb(blinking.delay_ms);
+      do {
+        bool is_time_to_update = blinking_pwm_lighting(&ctx);
+
+        if (!g_pwm_freeze && is_time_to_update)
+        {
+          pwm_status = blinking_pwm_update(&ctx);
+        }
+
+        keep_usb_connection();
+      } while (pwm_status != BLINKING_PWM_ENDED);
+
+      NRF_LOG_INFO("[main]: moving to the next LED");
     }
   }
 
