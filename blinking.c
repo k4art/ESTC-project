@@ -53,18 +53,26 @@ bool blinking_pwm_lighting(blinking_pwm_context_t * context)
 
   if (nrfx_systick_test(&context->last_systick_state, context->waiting_time_us))
   {
+    bool should_invert_led = true;
     nrfx_systick_get(&context->last_systick_state);
 
-    c_bsp_board_led_invert(context->led_idx);
     context->is_time_on = !context->is_time_on;
 
     if (context->is_time_on)
     {
       context->waiting_time_us = pwm_calc_time_on_us(context);
+      should_invert_led = context->waiting_time_us != 0;
     }
     else
     {
       context->waiting_time_us = PWM_PERIOD_US - pwm_calc_time_on_us(context);
+      should_invert_led = context->waiting_time_us != PWM_PERIOD_US;
+    }
+
+    // this logic allows correct handle of extreme cases when duty cycle is 0% or 100%
+    if (should_invert_led)
+    {
+      c_bsp_board_led_invert(context->led_idx);
     }
 
     return !context->is_time_on;
