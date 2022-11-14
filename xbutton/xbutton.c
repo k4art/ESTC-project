@@ -16,10 +16,10 @@
  * | State \ Action              | RAW_CLICK                   | DOUBLE_CLICK_INTENT_TIMEOUT |
  * |-----------------------------|-----------------------------|-----------------------------|
  * | NEUTRAL                     | WAITING_DOUBLE_CLICK_INTENT | NEUTRAL                     |
- * |                             | none                        | CLICK                       |
+ * |                             | none                        | none                        |
  * |-----------------------------|-----------------------------|-----------------------------|
  * | WAITING_DOUBLE_CLICK_INTENT | NEUTRAL                     | NEUTRAL                     |
- * |                             | DOUBLE_CLICK                | none                        |
+ * |                             | DOUBLE_CLICK                | CLICK                       |
  * |-----------------------------|-----------------------------|-----------------------------|
  */
 
