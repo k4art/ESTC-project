@@ -19,15 +19,13 @@ uint8_t DEVICE_ID[LEDS_NUMBER] = { 7, 2, 0, 2 };
 
 BLINKING_SERIES_WITH_CAPACITY_DEF(series, LEDS_NUMBER * (DEVICE_ID_RADIX - 1));
 
-volatile bool g_pwm_freeze;
+volatile bool g_pwm_freeze = true;
 
 static void toggle_should_proceed_flag(uint8_t pin)
 {
   (void) pin;
 
   g_pwm_freeze = !g_pwm_freeze;
-
-  NRF_LOG_INFO("Switched! Blinking is going: %d", g_pwm_freeze);
 }
 
 static void keep_usb_connection(void)
