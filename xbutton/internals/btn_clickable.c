@@ -92,6 +92,13 @@ static void emit_event(uint8_t button_idx, btn_event_t event)
   }
 }
 
+static void start_click_intent_timeout_timer(uint8_t button_idx)
+{
+  app_timer_start(click_timeout_timer,
+                  APP_TIMER_TICKS(MAX_CLICK_DURATION_MS),
+                  (void *) (uint32_t) button_idx);
+}
+
 static void button_fsm_next_state(uint8_t button_idx,
                                  btn_action_t action)
 {
@@ -102,6 +109,7 @@ static void button_fsm_next_state(uint8_t button_idx,
       {
         m_cb.btns[button_idx].state = BUTTON_STATE_WAITING_CLICK_INTENT;
 
+        start_click_intent_timeout_timer(button_idx);
         emit_event(button_idx, BUTTON_EVENT_PRESS);
       }
       break;
@@ -132,10 +140,6 @@ static void button_fsm_next_state(uint8_t button_idx,
 
 static void handle_press(uint8_t button_idx)
 {
-  app_timer_start(click_timeout_timer,
-                  APP_TIMER_TICKS(MAX_CLICK_DURATION_MS),
-                  (void *) (uint32_t) button_idx);
-
   button_fsm_next_state(button_idx, BUTTON_ACTION_PRESS);
 }
 
