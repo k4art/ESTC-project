@@ -112,6 +112,8 @@ static void button_fsm_next_state(uint8_t button_idx, btn_action_t action)
     case BUTTON_STATE_WAITING_DOUBLE_CLICK_INTENT:
       if (action == BUTTON_ACTION_RAW_CLICK)
       {
+        stop_double_click_intent_timeout_timer();
+
         m_cb.btns[button_idx].state = BUTTON_STATE_NEUTRAL;
         emit_event(button_idx, BUTTON_EVENT_DOUBLE_CLICK);
       }
