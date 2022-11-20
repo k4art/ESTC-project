@@ -53,7 +53,8 @@ static void initialize(void)
   nrfx_err_t err_code = xbutton_enable(USER_BUTTON_IDX, true);
   NRFX_ASSERT(err_code == NRFX_SUCCESS);
 
-  xbutton_on_double_click(USER_BUTTON_IDX, toggle_should_proceed_flag);
+  xbutton_on_long_press_start(USER_BUTTON_IDX, toggle_should_proceed_flag);
+  xbutton_on_long_press_end(USER_BUTTON_IDX, toggle_should_proceed_flag);
 }
 
 int main(void)
