@@ -97,7 +97,7 @@ static void emit_event(uint8_t button_idx, btn_event_t event)
       break;
 
     case BUTTON_EVENT_LONG_PRESS_END:
-      NRF_LOG_INFO("[xbutton]: %d - long_press_end", button_idx);
+      NRF_LOG_INFO("[xbutton]: %d - LONG_PRESS_END", button_idx);
       CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_long_press_end, button_idx);
       break;
   }
