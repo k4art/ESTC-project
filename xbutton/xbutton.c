@@ -83,6 +83,18 @@ static void emit_event(uint8_t button_idx, btn_event_t event)
   }
 }
 
+static void start_double_click_intent_timeout_timer(uint8_t button_idx)
+{
+  app_timer_start(m_double_click_timeout_timer,
+                  APP_TIMER_TICKS(DOUBLE_CLICK_MAX_SECOND_CLICK_WAITING_TIME_MS),
+                  (void *) (uint32_t) button_idx);
+}
+
+static void stop_double_click_intent_timeout_timer(void)
+{
+  app_timer_stop(m_double_click_timeout_timer);
+}
+
 static void button_fsm_next_state(uint8_t button_idx, btn_action_t action)
 {
   NRFX_ASSERT(btn_is_used(button_idx));
@@ -93,6 +105,7 @@ static void button_fsm_next_state(uint8_t button_idx, btn_action_t action)
       if (action == BUTTON_ACTION_RAW_CLICK)
       {
         m_cb.btns[button_idx].state = BUTTON_STATE_WAITING_DOUBLE_CLICK_INTENT;
+        start_double_click_intent_timeout_timer(button_idx);
       }
       break;
 
@@ -116,10 +129,6 @@ static void handle_raw_click(uint8_t button_idx)
   NRFX_ASSERT(btn_is_used(button_idx));
 
   button_fsm_next_state(button_idx, BUTTON_ACTION_RAW_CLICK);
-
-  app_timer_start(m_double_click_timeout_timer,
-                  APP_TIMER_TICKS(DOUBLE_CLICK_MAX_SECOND_CLICK_WAITING_TIME_MS),
-                  (void *) (uint32_t) button_idx);
 }
 
 static void handle_timer_double_click_timeout(void * context)

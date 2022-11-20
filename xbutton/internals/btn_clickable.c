@@ -81,12 +81,12 @@ static void emit_event(uint8_t button_idx, btn_event_t event)
       break;
 
     case BUTTON_EVENT_RELEASE:
-      NRF_LOG_INFO("[btn_clickable]: [%d] => event:RELEASE ", button_idx);
+      NRF_LOG_INFO("[btn_clickable]: [%d] => event:RELEASE", button_idx);
       CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_release, button_idx);
       break;
 
     case BUTTON_EVENT_CLICK:
-      NRF_LOG_INFO("[btn_clickable]: [%d] => event:CLICK ", button_idx);
+      NRF_LOG_INFO("[btn_clickable]: [%d] => event:CLICK", button_idx);
       CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_click, button_idx);
       break;
   }
@@ -156,8 +156,7 @@ static void handle_click_timeout_timer(void * context)
 }
 
 void btn_clickable_init(void)
-{
-  btn_debounced_init();
+{btn_debounced_init();
 
   ret_code_t ret = app_timer_create(&click_timeout_timer,
                                     APP_TIMER_MODE_SINGLE_SHOT,
