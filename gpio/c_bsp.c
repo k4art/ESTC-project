@@ -3,6 +3,8 @@
 static const uint8_t m_board_led_list[LEDS_NUMBER] = LEDS_LIST;
 static const uint8_t m_board_buttons_list[BUTTONS_NUMBER] = BUTTONS_LIST;
 
+static const rgb_led_t m_board_rgb_led_list[RGB_LEDS_NUMBER] = RGB_LEDS_LIST;
+
 static void c_bsp_board_leds_init(void)
 {
   for (uint32_t i = 0; i < LEDS_NUMBER; ++i)
@@ -61,3 +63,9 @@ uint32_t c_bsp_board_button_idx_to_pin(uint8_t button_idx)
   return m_board_buttons_list[button_idx];
 }
 
+const rgb_led_t * c_bsp_board_rgb_led_idx_to_pins(uint8_t rgb_led_idx)
+{
+  NRFX_ASSERT(IS_VALID_RGB_LED_IDX(rgb_led_idx));
+
+  return &m_board_rgb_led_list[rgb_led_idx];
+}
