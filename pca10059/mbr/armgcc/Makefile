@@ -15,6 +15,7 @@ $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
 
 # Source files common to all targets
 SRC_FILES += \
+  $(PROJ_DIR)/leds/rgb_led_pwm.c \
   $(PROJ_DIR)/blinking.c \
   $(PROJ_DIR)/xbutton/xbutton.c \
   $(PROJ_DIR)/xbutton/internals/btn_debounced.c \
