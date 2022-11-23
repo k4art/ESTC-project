@@ -62,7 +62,10 @@ typedef struct
   (rgb_led_idx >= 0 && rgb_led_idx < RGB_LEDS_NUMBER)
 
 void c_bsp_board_init(void);
+
 void c_bsp_board_led_invert(uint8_t led_idx);
+void c_bsp_board_led_on(uint8_t led_idx);
+void c_bsp_board_led_off(uint8_t led_idx);
 
 int c_bsp_board_button_state_get(uint8_t button_idx);
 

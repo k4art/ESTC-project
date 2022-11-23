@@ -10,7 +10,7 @@ static void c_bsp_board_leds_init(void)
   for (uint32_t i = 0; i < LEDS_NUMBER; ++i)
   {
     nrf_gpio_cfg_output(m_board_led_list[i]);
-    nrf_gpio_pin_write(m_board_led_list[i], !LED_ACTIVE_STATE);
+    c_bsp_board_led_off(i);
   }
 }
 
@@ -33,6 +33,20 @@ void c_bsp_board_led_invert(uint8_t led_idx)
   NRFX_ASSERT(IS_VALID_LED_IDX(led_idx));
 
   nrf_gpio_pin_toggle(m_board_led_list[led_idx]);
+}
+
+void c_bsp_board_led_on(uint8_t led_idx)
+{
+  NRFX_ASSERT(IS_VALID_LED_IDX(led_idx));
+
+  nrf_gpio_pin_write(m_board_led_list[led_idx], LED_ACTIVE_STATE);
+}
+
+void c_bsp_board_led_off(uint8_t led_idx)
+{
+  NRFX_ASSERT(IS_VALID_LED_IDX(led_idx));
+
+  nrf_gpio_pin_write(m_board_led_list[led_idx], LED_ACTIVE_STATE == 1 ? 0 : 1);
 }
 
 int c_bsp_board_button_state_get(uint8_t button_idx)
