@@ -1,8 +1,4 @@
-#include <stdint.h>
 #include <stdbool.h>
-
-#include "blinking.h"
-#include "nrfx_systick.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -11,22 +7,9 @@
 #include "nrf_log_backend_usb.h"
 
 #include "gpio/c_bsp.h"
-#include "xbutton/xbutton.h"
+#include "color_picker/color_picker.h"
 
-#define DEVICE_ID_RADIX 10
-
-uint8_t DEVICE_ID[LEDS_NUMBER] = { 7, 2, 0, 2 };
-
-BLINKING_SERIES_WITH_CAPACITY_DEF(series, LEDS_NUMBER * (DEVICE_ID_RADIX - 1));
-
-volatile bool g_pwm_freeze = true;
-
-static void toggle_should_proceed_flag(uint8_t pin)
-{
-  (void) pin;
-
-  g_pwm_freeze = !g_pwm_freeze;
-}
+#define DEVICE_ID 7202
 
 static void keep_usb_connection(void)
 {
@@ -45,48 +28,33 @@ static void logs_init(void)
 static void initialize(void)
 {
   logs_init();
+  color_picker_init();
+}
 
-  c_bsp_board_init();
-  xbutton_init();
-  blinking_pwm_init();
+static hsv_color_t calc_default_hsv(uint16_t device_id)
+{
+  uint16_t hue_perc = device_id % 100;
 
-  nrfx_err_t err_code = xbutton_enable(USER_BUTTON_IDX, true);
-  NRFX_ASSERT(err_code == NRFX_SUCCESS);
+  uint8_t h = hue_perc * H_COMPONENT_TOP_VALUE / 100;
+  uint8_t s = S_COMPONENT_TOP_VALUE;
+  uint8_t v = V_COMPONENT_TOP_VALUE;
 
-  xbutton_on_long_press_start(USER_BUTTON_IDX, toggle_should_proceed_flag);
-  xbutton_on_long_press_end(USER_BUTTON_IDX, toggle_should_proceed_flag);
+  return (hsv_color_t) HSV_COLOR(h, s, v);
 }
 
 int main(void)
 {
   initialize();
 
-  blinking_repeated_serial_led_init(&series, DEVICE_ID);
+  hsv_color_t default_color = calc_default_hsv(DEVICE_ID);
+
+  color_picker_set_hsv(default_color);
+  color_picker_enable(USER_BUTTON_IDX, ONLY_RGB_LED_IDX);
 
   while (true)
   {
-    for (size_t blink_idx = 0; blink_idx < series.length; blink_idx++)
-    {
-      blink_t blink = series.blinks[blink_idx];
-
-      blinking_pwm_context_t ctx = BLINKING_PWM_CONTEXT_START(blink.led_idx, 2);
-      blinking_pwm_status_t pwm_status = BLINKING_PWM_IN_PROGRESS;
-
-      do {
-        bool is_time_to_update = blinking_pwm_lighting(&ctx);
-
-        if (!g_pwm_freeze && is_time_to_update)
-        {
-          pwm_status = blinking_pwm_update(&ctx);
-        }
-
-        keep_usb_connection();
-      } while (pwm_status != BLINKING_PWM_ENDED);
-
-      NRF_LOG_INFO("[main]: moving to the next LED");
-    }
+    keep_usb_connection();
   }
 
   return 0;
 }
-
