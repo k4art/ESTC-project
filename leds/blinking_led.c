@@ -146,12 +146,6 @@ static void blinking_fast(blinking_led_t * led)
   blinking_update_with_blink_period_ms(led, BLINKING_LED_MODE_FAST_BLINK_PERIOD_MS);
 }
 
-void blinking_init(void)
-{
-  // Since all series values are 0 by default, there is not need of the following line:
-  // blinking_off();
-}
-
 #define BLINKING_LED_PWM_CONFIG(only_pin)                       \
   (nrfx_pwm_config_t)                                       \
   {                                                         \
