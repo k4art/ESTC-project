@@ -1,6 +1,6 @@
 #include "app_timer.h"
 
-#include "leds/rgb_led_pwm.h"
+#include "leds/rgb_led.h"
 
 #include "gpio/c_bsp.h"
 #include "xbutton/xbutton.h"
@@ -30,7 +30,7 @@ static void display_hsv_color(hsv_color_t hsv)
 {
   rgb_color_t rgb = hsv_to_rgb(hsv);
 
-  rgb_led_pwm_set_color(m_cb.rgb_led_idx, rgb);
+  rgb_led_set_color(m_cb.rgb_led_idx, rgb);
 }
 
 static void hsv_color_input_change_handler(hsv_color_t hsv)
@@ -59,7 +59,7 @@ void color_picker_enable(uint8_t button_idx, uint8_t rgb_led_idx, uint8_t status
   NRFX_ASSERT(IS_VALID_BUTTON_IDX(button_idx));
   NRFX_ASSERT(IS_VALID_RGB_LED_IDX(rgb_led_idx));
 
-  rgb_led_pwm_enable(rgb_led_idx, &m_cb.rgb_led_pwm_inst);
+  rgb_led_enable(rgb_led_idx, &m_cb.rgb_led_pwm_inst);
 
   m_cb.rgb_led_idx = rgb_led_idx;
   m_cb.status_blinking_led = BLINKING_LED(status_led_idx, &m_cb.status_led_pwm_inst);
