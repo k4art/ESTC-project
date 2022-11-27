@@ -59,11 +59,11 @@ static bool rgb_led_is_used(bsp_idx_t rgb_led_idx)
 
 static nrfx_err_t rgb_led_config_pwm_instance(bsp_idx_t rgb_led_idx)
 {
-  const rgb_led_t * p_rgb_led = c_bsp_board_rgb_led_idx_to_pins(rgb_led_idx);
+  const bsp_rgb_led_t * p_bsp_rgb_led = c_bsp_board_rgb_led_idx_to_pins(rgb_led->rgb_led_idx);
 
   nrfx_pwm_config_t config =
   {
-    .output_pins  = RGB_LED_CHANNEL_OUTPUT_PINS(p_rgb_led),
+    .output_pins  = RGB_LED_CHANNEL_OUTPUT_PINS(p_bsp_rgb_led),
     .irq_priority = RGB_LED_IRQ_PRIORITY,
     .base_clock   = RGB_LED_PWM_CLK,
     .top_value    = RGB_LED_PWM_TOP_VALUE,

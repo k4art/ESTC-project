@@ -46,7 +46,7 @@ typedef struct
   bsp_pin_no_t red_pin;
   bsp_pin_no_t green_pin;
   bsp_pin_no_t blue_pin;
-} rgb_led_t;
+} bsp_rgb_led_t;
 
 #define RGB_LEDS_NUMBER  1
 
@@ -79,6 +79,6 @@ bsp_pin_no_t c_bsp_board_led_idx_to_pin(bsp_idx_t button_idx);
 bsp_idx_t c_bsp_board_pin_to_button_idx(bsp_pin_no_t pin_no);
 bsp_pin_no_t c_bsp_board_button_idx_to_pin(bsp_idx_t button_idx);
 
-const rgb_led_t * c_bsp_board_rgb_led_idx_to_pins(bsp_idx_t rgb_led_idx);
+const bsp_rgb_led_t * c_bsp_board_rgb_led_idx_to_pins(bsp_idx_t rgb_led_idx);
 
 #endif
