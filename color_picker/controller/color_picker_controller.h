@@ -2,7 +2,7 @@
 #define __COLOR_PICKER_CONTROLLER_H
 
 #include "colors/colors.h"
-#include "leds/blinking.h"
+#include "leds/blinking_led.h"
 
 typedef void (* color_picker_controller_hsv_handler_t)(hsv_color_t color);
 

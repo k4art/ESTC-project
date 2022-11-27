@@ -64,7 +64,7 @@ void color_picker_enable(uint8_t button_idx, uint8_t rgb_led_idx, uint8_t status
   m_cb.rgb_led_idx = rgb_led_idx;
   m_cb.status_blinking_led = BLINKING_LED(status_led_idx, &m_cb.status_led_pwm_inst);
 
-  blinking_enable(&m_cb.status_blinking_led);
+  blinking_led_enable(&m_cb.status_blinking_led);
 
   color_picker_controller_enable(USER_BUTTON_IDX, &m_cb.status_blinking_led);
   color_picker_controller_on_input_change_hsv(hsv_color_input_change_handler);

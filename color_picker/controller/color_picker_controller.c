@@ -5,7 +5,7 @@
 
 #include "xbutton/xbutton.h"
 
-#include "leds/blinking.h"
+#include "leds/blinking_led.h"
 
 #include "color_picker/controller/slider.h"
 
@@ -51,14 +51,14 @@ static color_picker_controller_mode_t mode_followed_by(color_picker_controller_m
  * |      EDITOR_V     |  ON             |
  * |-------------------|-----------------|
  */
-static blinking_mode_t status_led_mode_for_controller_mode(color_picker_controller_mode_t mode)
+static blinking_led_mode_t status_led_mode_for_controller_mode(color_picker_controller_mode_t mode)
 {
   switch (mode)
   {
-    case COLOR_PICKER_CONTROLLER_MODE_VIEWER:   return BLINKING_MODE_OFF;
-    case COLOR_PICKER_CONTROLLER_MODE_EDITOR_H: return BLINKING_MODE_BLINKS_SLOW;
-    case COLOR_PICKER_CONTROLLER_MODE_EDITOR_S: return BLINKING_MODE_BLINKS_FAST;
-    case COLOR_PICKER_CONTROLLER_MODE_EDITOR_V: return BLINKING_MODE_ON;
+    case COLOR_PICKER_CONTROLLER_MODE_VIEWER:   return BLINKING_LED_MODE_OFF;
+    case COLOR_PICKER_CONTROLLER_MODE_EDITOR_H: return BLINKING_LED_MODE_BLINKS_SLOW;
+    case COLOR_PICKER_CONTROLLER_MODE_EDITOR_S: return BLINKING_LED_MODE_BLINKS_FAST;
+    case COLOR_PICKER_CONTROLLER_MODE_EDITOR_V: return BLINKING_LED_MODE_ON;
   }
 
   UNREACHABLE_RETURN(0);
@@ -106,7 +106,7 @@ static size_t get_current_slider_idx(void)
 static void switch_mode(void)
 {
   m_cb.current_mode = mode_followed_by(m_cb.current_mode);
-  blinking_set_mode(m_cb.p_status_led, status_led_mode_for_controller_mode(m_cb.current_mode));
+  blinking_led_set_mode(m_cb.p_status_led, status_led_mode_for_controller_mode(m_cb.current_mode));
 }
 
 static slider_t * get_slider_at(size_t slider_idx)

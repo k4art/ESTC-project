@@ -7,11 +7,11 @@
 
 typedef enum blinking_mode_e
 {
-  BLINKING_MODE_OFF,
-  BLINKING_MODE_ON,
-  BLINKING_MODE_BLINKS_SLOW,
-  BLINKING_MODE_BLINKS_FAST,
-} blinking_mode_t;
+  BLINKING_LED_MODE_OFF,
+  BLINKING_LED_MODE_ON,
+  BLINKING_LED_MODE_BLINKS_SLOW,
+  BLINKING_LED_MODE_BLINKS_FAST,
+} blinking_led_mode_t;
 
 typedef struct blinky_led_s
 {
@@ -31,7 +31,7 @@ typedef struct blinky_led_s
     .p_pwm_inst = p_pwm_instance,               \
   }
 
-void blinking_enable(blinking_led_t * led);
-void blinking_set_mode(blinking_led_t * led, blinking_mode_t mode);
+void blinking_led_enable(blinking_led_t * led);
+void blinking_led_set_mode(blinking_led_t * led, blinking_led_mode_t mode);
 
 #endif

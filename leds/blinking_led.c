@@ -3,30 +3,30 @@
 
 #include "gpio/c_bsp.h"
 
-#include "leds/blinking.h"
+#include "blinking_led.h"
 
 // should be specified in both macros
-#define BLINKING_PWM_CONFIG_BASE_CLOCK   NRF_PWM_CLK_125kHz
-#define BLINKING_PWM_CLOCK_FREQUENCY_KHZ 125
+#define BLINKING_LED_PWM_CONFIG_BASE_CLOCK   NRF_PWM_CLK_125kHz
+#define BLINKING_LED_PWM_CLOCK_FREQUENCY_KHZ 125
 
-#define BLINKING_MODE_SLOW_BLINK_PERIOD_MS 1500
-#define BLINKING_MODE_FAST_BLINK_PERIOD_MS 500
+#define BLINKING_LED_MODE_SLOW_BLINK_PERIOD_MS 1500
+#define BLINKING_LED_MODE_FAST_BLINK_PERIOD_MS 500
 
-#define BLINKING_SERIES_LENGTH 128
+#define BLINKING_LED_SERIES_LENGTH 128
 
 // 1250 top value implies 100 HZ PWM frequency with slowest (125kHZ) base clock
 const uint16_t TOP_VALUE_FOR_SINGLULAR_INTENSITY = 1250;
 
-static nrf_pwm_values_wave_form_t m_blinking_series[BLINKING_SERIES_LENGTH];
+static nrf_pwm_values_wave_form_t m_blinking_series[BLINKING_LED_SERIES_LENGTH];
 
 /*
  * Defines wave shape of a blink.
  */
 static uint16_t blink_series_fn(uint16_t series_idx, uint16_t top_value)
 {
-  NRFX_ASSERT(series_idx < BLINKING_SERIES_LENGTH);
+  NRFX_ASSERT(series_idx < BLINKING_LED_SERIES_LENGTH);
 
-  const uint16_t PICK_SERIES_IDX = BLINKING_SERIES_LENGTH / 2;
+  const uint16_t PICK_SERIES_IDX = BLINKING_LED_SERIES_LENGTH / 2;
 
   if (series_idx <= PICK_SERIES_IDX)
   {
@@ -35,8 +35,8 @@ static uint16_t blink_series_fn(uint16_t series_idx, uint16_t top_value)
   }
   else
   {
-    // (PICK_SERIES_IDX, BLINKING_SERIES_LENGTH) -> (TOP_VALUE, 0)
-    return NRFX_ROUNDED_DIV(top_value * (BLINKING_SERIES_LENGTH - series_idx), PICK_SERIES_IDX);
+    // (PICK_SERIES_IDX, BLINKING_LED_SERIES_LENGTH) -> (TOP_VALUE, 0)
+    return NRFX_ROUNDED_DIV(top_value * (BLINKING_LED_SERIES_LENGTH - series_idx), PICK_SERIES_IDX);
   }
 }
 
@@ -48,8 +48,8 @@ static uint16_t calc_top_value_for_series_period_ms(uint16_t period_ms)
 
   // Also, Freq(pwm) = Length(series) / T(series)
 
-  uint16_t pwm_frequency_hz = NRFX_ROUNDED_DIV(BLINKING_SERIES_LENGTH * 1000, period_ms);
-  uint16_t top_value        = NRFX_ROUNDED_DIV(BLINKING_PWM_CLOCK_FREQUENCY_KHZ * 1000, pwm_frequency_hz);
+  uint16_t pwm_frequency_hz = NRFX_ROUNDED_DIV(BLINKING_LED_SERIES_LENGTH * 1000, period_ms);
+  uint16_t top_value        = NRFX_ROUNDED_DIV(BLINKING_LED_PWM_CLOCK_FREQUENCY_KHZ * 1000, pwm_frequency_hz);
 
   return top_value;
 }
@@ -67,7 +67,7 @@ static void update_series_for_singular_intensity_percent(uint16_t intensity_perc
 {
   uint16_t pwm_value = NRFX_ROUNDED_DIV(TOP_VALUE_FOR_SINGLULAR_INTENSITY * intensity_percent, 100);
 
-  for (size_t i = 0; i < BLINKING_SERIES_LENGTH; i++)
+  for (size_t i = 0; i < BLINKING_LED_SERIES_LENGTH; i++)
   {
     m_blinking_series[i] = PWM_VALUES_COMMON_WAVE_FORM(pwm_value, TOP_VALUE_FOR_SINGLULAR_INTENSITY);
   }
@@ -77,7 +77,7 @@ static void update_series_for_blink_period_ms(uint16_t period_ms)
 {
   uint16_t top_value = calc_top_value_for_series_period_ms(period_ms);
 
-  for (size_t i = 0; i < BLINKING_SERIES_LENGTH; i++)
+  for (size_t i = 0; i < BLINKING_LED_SERIES_LENGTH; i++)
   {
     uint16_t pwm_value = blink_series_fn(i, top_value);
 
@@ -88,7 +88,7 @@ static void update_series_for_blink_period_ms(uint16_t period_ms)
 /*
  * Can be used for both restarting and starting the sequence.
  */
-static void blinking_pwm_playback(blinking_led_t * led)
+static void blinking_led_pwm_playback(blinking_led_t * led)
 {
   nrfx_err_t err_code = nrfx_pwm_simple_playback(led->p_pwm_inst, &led->pwm_seq, 1, NRFX_PWM_FLAG_LOOP);
   APP_ERROR_CHECK(err_code);
@@ -116,7 +116,7 @@ static void blinking_update_with_blink_period_ms(blinking_led_t * led, uint16_t 
     // Maybe it causes double SEQSTART events (for same or different sequences),
     // if the singular series ends by itself.
 
-    blinking_pwm_playback(led);
+    blinking_led_pwm_playback(led);
   }
   else
   {
@@ -138,12 +138,12 @@ static void blinking_on(blinking_led_t * led)
 
 static void blinking_slow(blinking_led_t * led)
 {
-  blinking_update_with_blink_period_ms(led, BLINKING_MODE_SLOW_BLINK_PERIOD_MS);
+  blinking_update_with_blink_period_ms(led, BLINKING_LED_MODE_SLOW_BLINK_PERIOD_MS);
 }
 
 static void blinking_fast(blinking_led_t * led)
 {
-  blinking_update_with_blink_period_ms(led, BLINKING_MODE_FAST_BLINK_PERIOD_MS);
+  blinking_update_with_blink_period_ms(led, BLINKING_LED_MODE_FAST_BLINK_PERIOD_MS);
 }
 
 void blinking_init(void)
@@ -152,7 +152,7 @@ void blinking_init(void)
   // blinking_off();
 }
 
-#define BLINKING_PWM_CONFIG(only_pin)                       \
+#define BLINKING_LED_PWM_CONFIG(only_pin)                       \
   (nrfx_pwm_config_t)                                       \
   {                                                         \
     .output_pins =                                          \
@@ -162,7 +162,7 @@ void blinking_init(void)
       NRFX_PWM_PIN_NOT_USED,                                \
       NRFX_PWM_PIN_NOT_USED,                                \
     },                                                      \
-    .base_clock   = BLINKING_PWM_CONFIG_BASE_CLOCK,         \
+    .base_clock   = BLINKING_LED_PWM_CONFIG_BASE_CLOCK,     \
     .top_value    = TOP_VALUE_FOR_SINGLULAR_INTENSITY,      \
     .irq_priority = NRFX_PWM_DEFAULT_CONFIG_IRQ_PRIORITY,   \
     .count_mode   = NRF_PWM_MODE_UP,                        \
@@ -170,49 +170,47 @@ void blinking_init(void)
     .step_mode    = NRF_PWM_STEP_AUTO,                      \
   }
 
-#define BLINKING_PWM_SEQUENCE(p_wave_form_series)           \
+#define BLINKING_LED_PWM_SEQUENCE(p_wave_form_series)       \
   (nrf_pwm_sequence_t)                                      \
   {                                                         \
     .values.p_wave_form = m_blinking_series,                \
-    .length             = BLINKING_SERIES_LENGTH * 4,       \
+    .length             = BLINKING_LED_SERIES_LENGTH * 4,   \
     .repeats            = 0,                                \
     .end_delay          = 0,                                \
   }
 
-void blinking_enable(blinking_led_t * led)
+void blinking_led_enable(blinking_led_t * led)
 {
   bsp_pin_no_t led_pin = c_bsp_board_led_idx_to_pin(led->led_idx);
 
   // currently this module does not support multi LEDs
-  nrfx_pwm_config_t pwm_config = BLINKING_PWM_CONFIG(led_pin);
+  nrfx_pwm_config_t pwm_config = BLINKING_LED_PWM_CONFIG(led_pin);
 
-  led->pwm_seq = BLINKING_PWM_SEQUENCE(m_blinking_series);
+  led->pwm_seq = BLINKING_LED_PWM_SEQUENCE(m_blinking_series);
 
   nrfx_err_t err_code = nrfx_pwm_init(led->p_pwm_inst, &pwm_config, NULL);
   APP_ERROR_CHECK(err_code);
 
-  blinking_pwm_playback(led);
+  blinking_led_pwm_playback(led);
 }
 
-void blinking_set_mode(blinking_led_t * led, blinking_mode_t mode)
+void blinking_led_set_mode(blinking_led_t * led, blinking_led_mode_t mode)
 {
-  NRF_LOG_INFO("[blinking]: switch to mode (%d)", mode);
-
   switch (mode)
   {
-    case BLINKING_MODE_OFF:
+    case BLINKING_LED_MODE_OFF:
       blinking_off(led);
       break;
 
-    case BLINKING_MODE_ON:
+    case BLINKING_LED_MODE_ON:
       blinking_on(led);
       break;
 
-    case BLINKING_MODE_BLINKS_SLOW:
+    case BLINKING_LED_MODE_BLINKS_SLOW:
       blinking_slow(led);
       break;
 
-    case BLINKING_MODE_BLINKS_FAST:
+    case BLINKING_LED_MODE_BLINKS_FAST:
       blinking_fast(led);
       break;
   }
