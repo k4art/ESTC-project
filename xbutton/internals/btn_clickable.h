@@ -18,6 +18,6 @@ void btn_clickable_on_release(uint8_t button_idx, btn_clickable_handler_t handle
 void btn_clickable_on_click(uint8_t button_idx, btn_clickable_handler_t handler);
 
 void btn_clickable_on_long_press_start(uint8_t button_idx, btn_clickable_handler_t handler);
-void btn_clickable_on_long_press_end(uint8_t button_idx, btn_clickable_handler_t handler);
+void btn_clickable_on_long_press_stop(uint8_t button_idx, btn_clickable_handler_t handler);
 
 #endif
