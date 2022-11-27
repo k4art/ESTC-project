@@ -5,6 +5,9 @@
 
 #include "nrf_gpio.h"
 
+typedef uint8_t bsp_pin_no_t;
+typedef uint8_t bsp_idx_t;
+
 // PCA10059 board
 
 // LEDs
@@ -39,9 +42,9 @@
 // RGB LEDs
 typedef struct
 {
-  uint8_t red_pin;
-  uint8_t green_pin;
-  uint8_t blue_pin;
+  bsp_pin_no_t red_pin;
+  bsp_pin_no_t green_pin;
+  bsp_pin_no_t blue_pin;
 } rgb_led_t;
 
 #define RGB_LEDS_NUMBER  1
@@ -63,15 +66,16 @@ typedef struct
 
 void c_bsp_board_init(void);
 
-void c_bsp_board_led_invert(uint8_t led_idx);
-void c_bsp_board_led_on(uint8_t led_idx);
-void c_bsp_board_led_off(uint8_t led_idx);
+void c_bsp_board_led_invert(bsp_idx_t led_idx);
+void c_bsp_board_led_on(bsp_idx_t led_idx);
+void c_bsp_board_led_off(bsp_idx_t led_idx);
 
-int c_bsp_board_button_state_get(uint8_t button_idx);
+int c_bsp_board_button_state_get(bsp_idx_t button_idx);
 
-uint8_t c_bsp_board_pin_to_button_idx(uint32_t pin_no);
-uint32_t c_bsp_board_button_idx_to_pin(uint8_t button_idx);
 
-const rgb_led_t * c_bsp_board_rgb_led_idx_to_pins(uint8_t rgb_led_idx);
+bsp_idx_t c_bsp_board_pin_to_button_idx(bsp_pin_no_t pin_no);
+bsp_pin_no_t c_bsp_board_button_idx_to_pin(bsp_idx_t button_idx);
+
+const rgb_led_t * c_bsp_board_rgb_led_idx_to_pins(bsp_idx_t rgb_led_idx);
 
 #endif
