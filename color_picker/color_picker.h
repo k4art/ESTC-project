@@ -6,6 +6,6 @@
 void color_picker_init(void);
 
 void color_picker_set_hsv(hsv_color_t hsv);
-void color_picker_enable(uint8_t button_idx, uint8_t rgb_led_idx, uint8_t status_led_idx);
+void color_picker_enable(bsp_idx_t button_idx, bsp_idx_t rgb_led_idx, bsp_idx_t status_led_idx);
 
 #endif

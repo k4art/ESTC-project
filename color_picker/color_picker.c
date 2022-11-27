@@ -14,7 +14,7 @@
 
 typedef struct color_picker_control_block_s
 {
-  bsp_idx_t rgb_led_idx;
+  rgb_led_t viewer_color_rgb_led;
   blinking_led_t status_blinking_led;
   nrfx_pwm_t rgb_led_pwm_inst;
   nrfx_pwm_t status_led_pwm_inst;
@@ -30,7 +30,7 @@ static void display_hsv_color(hsv_color_t hsv)
 {
   rgb_color_t rgb = hsv_to_rgb(hsv);
 
-  rgb_led_set_color(m_cb.rgb_led_idx, rgb);
+  rgb_led_set_color(&m_cb.viewer_color_rgb_led, rgb);
 }
 
 static void hsv_color_input_change_handler(hsv_color_t hsv)
@@ -54,14 +54,13 @@ void color_picker_set_hsv(hsv_color_t hsv)
   color_picker_controller_set_hsv(hsv);
 }
 
-void color_picker_enable(uint8_t button_idx, uint8_t rgb_led_idx, uint8_t status_led_idx)
+void color_picker_enable(bsp_idx_t button_idx, bsp_idx_t rgb_led_idx, bsp_idx_t status_led_idx)
 {
   NRFX_ASSERT(IS_VALID_BUTTON_IDX(button_idx));
   NRFX_ASSERT(IS_VALID_RGB_LED_IDX(rgb_led_idx));
 
-  rgb_led_enable(rgb_led_idx, &m_cb.rgb_led_pwm_inst);
+  m_cb.viewer_color_rgb_led = RGB_LED(rgb_led_idx, &m_cb.rgb_led_pwm_inst);
 
-  m_cb.rgb_led_idx = rgb_led_idx;
   m_cb.status_blinking_led = BLINKING_LED(status_led_idx, &m_cb.status_led_pwm_inst);
 
   blinking_led_enable(&m_cb.status_blinking_led);
