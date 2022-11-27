@@ -150,7 +150,7 @@ static void on_input_change_handler(slider_t * slider)
   CALL_IF_NOT_NULL(m_cb.on_input_change, hsv_color);
 }
 
-static void current_slider_start_handler(uint8_t button_idx)
+static void start_current_slider_handler(uint8_t button_idx)
 {
   (void) button_idx;
 
@@ -167,7 +167,7 @@ static void current_slider_start_handler(uint8_t button_idx)
   }
 }
 
-static void current_slider_stop_handler(uint8_t button_idx)
+static void stop_current_slider_handler(uint8_t button_idx)
 {
   (void) button_idx;
 
@@ -228,8 +228,8 @@ void color_picker_controller_enable(uint8_t button_idx, blinking_led_t * p_statu
 
   xbutton_on_double_click(button_idx, switch_mode_handler);
 
-  xbutton_on_long_press_start(button_idx, current_slider_start_handler);
-  xbutton_on_long_press_stop(button_idx, current_slider_stop_handler);
+  xbutton_on_long_press_start(button_idx, start_current_slider_handler);
+  xbutton_on_long_press_stop(button_idx, stop_current_slider_handler);
 
   m_cb.p_status_led = p_status_led;
 }
