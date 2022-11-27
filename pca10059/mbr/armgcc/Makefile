@@ -16,9 +16,9 @@ $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
 # Source files common to all targets
 SRC_FILES += \
   $(PROJ_DIR)/color_picker/color_picker.c \
-  $(PROJ_DIR)/color_picker/colors.c \
   $(PROJ_DIR)/color_picker/controller/color_picker_controller.c \
   $(PROJ_DIR)/color_picker/controller/slider.c \
+  $(PROJ_DIR)/colors/colors.c \
   $(PROJ_DIR)/leds/rgb_led_pwm.c \
   $(PROJ_DIR)/leds/blinking.c \
   $(PROJ_DIR)/xbutton/xbutton.c \

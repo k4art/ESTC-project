@@ -9,10 +9,6 @@
 
 #define RGB_COMPONENTS_TOP_VALUE 255
 
-#define R_COMPONENT_IDX 0
-#define G_COMPONENT_IDX 1
-#define B_COMPONENT_IDX 2
-
 typedef struct rgb_color_s
 {
   uint8_t red;
@@ -29,10 +25,6 @@ typedef struct rgb_color_s
 #define H_COMPONENT_TOP_VALUE 255
 #define S_COMPONENT_TOP_VALUE 255
 #define V_COMPONENT_TOP_VALUE 255
-
-#define H_COMPONENT_IDX 0
-#define S_COMPONENT_IDX 1
-#define V_COMPONENT_IDX 2
 
 typedef struct hsv_color_s
 {

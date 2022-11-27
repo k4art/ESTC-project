@@ -25,13 +25,13 @@ static void switch_direction(slider_t * slider)
   slider->state.direction = opposite_direction(slider->state.direction);
 }
 
-static void slider_handle_reaching_max(slider_t * slider)
+static void handle_when_reaches_max(slider_t * slider)
 {
+  NRFX_ASSERT(slider->state.direction == SLIDER_DIRECTION_UP);
+
   switch (slider->slider_mode)
   {
     case SLIDER_MODE_CIRCULAR:
-      NRFX_ASSERT(slider->state.direction == SLIDER_DIRECTION_UP);
-
       slider->state.step_idx = 0;
       break;
 
@@ -43,13 +43,13 @@ static void slider_handle_reaching_max(slider_t * slider)
   }
 }
 
-static void slider_handle_reaching_zero(slider_t * slider)
+static void handle_when_reaches_zero(slider_t * slider)
 {
+  NRFX_ASSERT(slider->state.direction == SLIDER_DIRECTION_DOWN);
+
   switch (slider->slider_mode)
   {
     case SLIDER_MODE_CIRCULAR:
-      NRFX_ASSERT(slider->state.direction == SLIDER_DIRECTION_DOWN);
-
       slider->state.step_idx = SLIDER_LAST_STEP_IDX;
       break;
 
@@ -68,14 +68,14 @@ static void slider_next_step_idx(slider_t * slider)
     case SLIDER_DIRECTION_UP:
       if (slider->state.step_idx++ == SLIDER_LAST_STEP_IDX)
       {
-        slider_handle_reaching_max(slider);
+        handle_when_reaches_max(slider);
       }
       break;
 
     case SLIDER_DIRECTION_DOWN:
       if (slider->state.step_idx-- == 0)
       {
-        slider_handle_reaching_zero(slider);
+        handle_when_reaches_zero(slider);
       }
       break;
   }
@@ -101,11 +101,6 @@ void slider_init(void)
   app_timer_create(&m_update_value_timer, APP_TIMER_MODE_REPEATED, update_value_timer_handler);
 }
 
-void slider_on_change(slider_t * slider, slider_on_change_handler_fn fn)
-{
-  slider->on_change = fn;
-}
-
 void slider_start(slider_t * slider)
 {
   app_timer_start(m_update_value_timer,
@@ -125,6 +120,10 @@ uint16_t slider_get_value(slider_t * slider)
 
 void slider_set_value(slider_t * slider, uint16_t value)
 {
-  // used uint32_t to avoid possible overflows
   slider->state.step_idx = NRFX_ROUNDED_DIV((uint32_t) value * SLIDER_LAST_STEP_IDX, slider->max_value);
+}
+
+void slider_on_change(slider_t * slider, slider_on_change_handler_t fn)
+{
+  slider->on_change = fn;
 }

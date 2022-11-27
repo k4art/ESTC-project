@@ -1,6 +1,6 @@
 #include "utils.h"
 
-#include "color_picker/colors.h"
+#include "colors.h"
 
 /*
  * This implementation assumes that the following conditions are true.
@@ -10,23 +10,22 @@ STATIC_ASSERT(S_COMPONENT_TOP_VALUE == 255);
 STATIC_ASSERT(V_COMPONENT_TOP_VALUE == 255);
 
 /*
+ * Adopted from
  * https://stackoverflow.com/questions/3018313/algorithm-to-convert-rgb-to-hsv-and-hsv-to-rgb-in-range-0-255-for-both
  */
 rgb_color_t hsv_to_rgb(hsv_color_t hsv)
 {
-  uint8_t region, remainder, p, q, t;
-
   if (hsv.saturation == 0)
   {
     return RGB_COLOR(hsv.value, hsv.value, hsv.value);
   }
 
-  region = hsv.hue / 43;
-  remainder = (hsv.hue - (region * 43)) * 6;
+  uint8_t region    = hsv.hue / 43;
+  uint8_t remainder = (hsv.hue - (region * 43)) * 6;
 
-  p = (hsv.value * (255 - hsv.saturation)) >> 8;
-  q = (hsv.value * (255 - ((hsv.saturation * remainder) >> 8))) >> 8;
-  t = (hsv.value * (255 - ((hsv.saturation * (255 - remainder)) >> 8))) >> 8;
+  uint8_t p = (hsv.value * (255 - hsv.saturation)) >> 8;
+  uint8_t q = (hsv.value * (255 - ((hsv.saturation * remainder) >> 8))) >> 8;
+  uint8_t t = (hsv.value * (255 - ((hsv.saturation * (255 - remainder)) >> 8))) >> 8;
 
   NRFX_ASSERT(region < 6);
 

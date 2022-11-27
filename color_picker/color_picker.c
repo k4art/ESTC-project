@@ -9,20 +9,33 @@
 
 #include "color_picker/color_picker.h"
 
-#define INCREMENTING_PERIOD_MS 50
-#define INCREMENTING_STEP       5
+#define COLOR_PICKER_RGB_LED_PWM_INSTANCE_ID    0
+#define COLOR_PICKER_STATUS_LED_PWM_INSTANCE_ID 1
 
-static rgb_led_pwm_color_t rgb_pwm_color = { .red = 100, .green = 0, .blue = 0 };
-static nrfx_pwm_t pwm_inst = NRFX_PWM_INSTANCE(0);
-
-static void copy_cntrl_value_to_rgb_pwm()
+typedef struct color_picker_control_block_s
 {
-  hsv_color_t hsv = color_picker_controller_get_hsv();
+  bsp_idx_t rgb_led_idx;
+  blinking_led_t status_blinking_led;
+  nrfx_pwm_t rgb_led_pwm_inst;
+  nrfx_pwm_t status_led_pwm_inst;
+} color_picker_control_block_t;
+
+static color_picker_control_block_t m_cb =
+{
+  .status_led_pwm_inst = NRFX_PWM_INSTANCE(COLOR_PICKER_STATUS_LED_PWM_INSTANCE_ID),
+  .rgb_led_pwm_inst    = NRFX_PWM_INSTANCE(COLOR_PICKER_RGB_LED_PWM_INSTANCE_ID),
+};
+
+static void display_hsv_color(hsv_color_t hsv)
+{
   rgb_color_t rgb = hsv_to_rgb(hsv);
 
-  rgb_pwm_color.red   = rgb.red;
-  rgb_pwm_color.green = rgb.green;
-  rgb_pwm_color.blue  = rgb.blue;
+  rgb_led_pwm_set_color(m_cb.rgb_led_idx, rgb);
+}
+
+static void hsv_color_input_change_handler(hsv_color_t hsv)
+{
+  display_hsv_color(hsv);
 }
 
 void color_picker_init(void)
@@ -31,22 +44,28 @@ void color_picker_init(void)
   color_picker_controller_init();
 }
 
+/*
+ * It does not pauses the color_picker_controller, so
+ * it should be used before color_picker_enable(), or when user does not change color.
+ */
 void color_picker_set_hsv(hsv_color_t hsv)
 {
+  display_hsv_color(hsv);
   color_picker_controller_set_hsv(hsv);
-  copy_cntrl_value_to_rgb_pwm();
 }
 
-void color_picker_enable(uint8_t button_idx, uint8_t rgb_led_idx)
+void color_picker_enable(uint8_t button_idx, uint8_t rgb_led_idx, uint8_t status_led_idx)
 {
   NRFX_ASSERT(IS_VALID_BUTTON_IDX(button_idx));
   NRFX_ASSERT(IS_VALID_RGB_LED_IDX(rgb_led_idx));
 
-  nrfx_err_t err_code = rgb_led_pwm_enable(rgb_led_idx, &pwm_inst, &rgb_pwm_color);
-  NRFX_ASSERT(err_code == NRFX_SUCCESS);
+  rgb_led_pwm_enable(rgb_led_idx, &m_cb.rgb_led_pwm_inst);
 
-  color_picker_controller_enable(USER_BUTTON_IDX);
-  color_picker_controller_on_input_change_hsv(copy_cntrl_value_to_rgb_pwm);
+  m_cb.rgb_led_idx = rgb_led_idx;
+  m_cb.status_blinking_led = BLINKING_LED(status_led_idx, &m_cb.status_led_pwm_inst);
 
-  rgb_led_pwm_turn_on(rgb_led_idx);
+  blinking_enable(&m_cb.status_blinking_led);
+
+  color_picker_controller_enable(USER_BUTTON_IDX, &m_cb.status_blinking_led);
+  color_picker_controller_on_input_change_hsv(hsv_color_input_change_handler);
 }

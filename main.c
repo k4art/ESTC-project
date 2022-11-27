@@ -35,11 +35,11 @@ static hsv_color_t calc_default_hsv(uint16_t device_id)
 {
   uint16_t hue_perc = device_id % 100;
 
-  uint8_t h = hue_perc * H_COMPONENT_TOP_VALUE / 100;
+  uint8_t h = NRFX_ROUNDED_DIV(hue_perc * H_COMPONENT_TOP_VALUE, 100);
   uint8_t s = S_COMPONENT_TOP_VALUE;
   uint8_t v = V_COMPONENT_TOP_VALUE;
 
-  return (hsv_color_t) HSV_COLOR(h, s, v);
+  return HSV_COLOR(h, s, v);
 }
 
 int main(void)
@@ -49,7 +49,7 @@ int main(void)
   hsv_color_t default_color = calc_default_hsv(DEVICE_ID);
 
   color_picker_set_hsv(default_color);
-  color_picker_enable(USER_BUTTON_IDX, ONLY_RGB_LED_IDX);
+  color_picker_enable(USER_BUTTON_IDX, ONLY_RGB_LED_IDX, SINGLE_LED_IDX);
 
   while (true)
   {
