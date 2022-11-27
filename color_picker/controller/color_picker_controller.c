@@ -229,7 +229,7 @@ void color_picker_controller_enable(uint8_t button_idx, blinking_led_t * p_statu
   xbutton_on_double_click(button_idx, switch_mode_handler);
 
   xbutton_on_long_press_start(button_idx, current_slider_start_handler);
-  xbutton_on_long_press_end(button_idx, current_slider_stop_handler);
+  xbutton_on_long_press_stop(button_idx, current_slider_stop_handler);
 
   m_cb.p_status_led = p_status_led;
 }
