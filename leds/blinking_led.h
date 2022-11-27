@@ -29,6 +29,7 @@ typedef struct blinky_led_s
   {                                             \
     .led_idx = led_index,                       \
     .p_pwm_inst = p_pwm_instance,               \
+    .is_blinking = false,                       \
   }
 
 void blinking_led_enable(blinking_led_t * led);
