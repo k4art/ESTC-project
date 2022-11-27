@@ -10,7 +10,7 @@
 #define RGB_LED_IRQ_PRIORITY  NRFX_PWM_DEFAULT_CONFIG_IRQ_PRIORITY
 
 // The fields must be uint16_t, because PWM works only with 16 bits values sequences
-typedef struct reg_led_color_s
+typedef struct rgb_led_color_s
 {
   union
   {
@@ -23,16 +23,17 @@ typedef struct reg_led_color_s
 
     uint16_t pwm_individual_values[NRF_PWM_CHANNEL_COUNT];
   };
-} reg_led_color_t;
+} rgb_led_color_t;
 
-STATIC_ASSERT(NRF_PWM_VALUES_LENGTH(reg_led_color_t) == NRF_PWM_CHANNEL_COUNT);
+STATIC_ASSERT(NRF_PWM_VALUES_LENGTH(rgb_led_color_t) == NRF_PWM_CHANNEL_COUNT);
 
-#define REG_LED_CHANNEL_OUTPUT_PINS(p_rgb_led) \
-  {                                                \
-    p_rgb_led->red_pin,                            \
-    p_rgb_led->green_pin,                          \
-    p_rgb_led->blue_pin,                           \
-    NRFX_PWM_PIN_NOT_USED,                         \
+#define RGB_LED_CHANNEL_OUTPUT_PINS(p_rgb_led) \
+  (rgb_led_t)                                  \
+  {                                            \
+    p_rgb_led->red_pin,                        \
+    p_rgb_led->green_pin,                      \
+    p_rgb_led->blue_pin,                       \
+    NRFX_PWM_PIN_NOT_USED,                     \
   }
 
 typedef struct rgb_led_info_s
@@ -40,15 +41,15 @@ typedef struct rgb_led_info_s
   bool is_used;
   nrf_pwm_sequence_t pwm_seq;
   nrfx_pwm_t * p_pwm_inst;
-  reg_led_color_t p_pwm_color;
-} reg_led_info_t;
+  rgb_led_color_t p_pwm_color;
+} rgb_led_info_t;
 
 typedef struct
 {
-  reg_led_info_t rgb_leds[RGB_LEDS_NUMBER];
-} reg_led_control_block_t;
+  rgb_led_info_t rgb_leds[RGB_LEDS_NUMBER];
+} rgb_led_control_block_t;
 
-static reg_led_control_block_t m_cb;
+static rgb_led_control_block_t m_cb;
 
 static bool rgb_led_is_used(bsp_idx_t rgb_led_idx)
 {
@@ -62,7 +63,7 @@ static nrfx_err_t rgb_led_config_pwm_instance(bsp_idx_t rgb_led_idx)
 
   nrfx_pwm_config_t config =
   {
-    .output_pins  = REG_LED_CHANNEL_OUTPUT_PINS(p_rgb_led),
+    .output_pins  = RGB_LED_CHANNEL_OUTPUT_PINS(p_rgb_led),
     .irq_priority = RGB_LED_IRQ_PRIORITY,
     .base_clock   = RGB_LED_PWM_CLK,
     .top_value    = RGB_LED_PWM_TOP_VALUE,
@@ -97,7 +98,7 @@ void rgb_led_enable(bsp_idx_t rgb_led_idx, nrfx_pwm_t * p_pwm_instance)
 
 void rgb_led_set_color(bsp_idx_t rgb_led_idx, rgb_color_t rgb)
 {
-  NRF_LOG_INFO("[reg_led]: set color %d:%d:%d", rgb.red, rgb.green, rgb.blue);
+  NRF_LOG_INFO("[rgb_led]: set color %d:%d:%d", rgb.red, rgb.green, rgb.blue);
 
   m_cb.rgb_leds[rgb_led_idx].p_pwm_color.red = rgb.red;
   m_cb.rgb_leds[rgb_led_idx].p_pwm_color.green = rgb.green;
