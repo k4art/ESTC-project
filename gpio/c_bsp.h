@@ -23,6 +23,7 @@ typedef uint8_t bsp_idx_t;
 #define LED2_B           LED_4
 
 #define LEDS_LIST        { LED_1, LED_2, LED_3, LED_4 }
+#define SINGLE_LED_IDX 0
 
 #define LED_ACTIVE_STATE 0
 
@@ -72,6 +73,8 @@ void c_bsp_board_led_off(bsp_idx_t led_idx);
 
 int c_bsp_board_button_state_get(bsp_idx_t button_idx);
 
+bsp_idx_t c_bsp_board_pin_to_led_idx(bsp_pin_no_t pin_no);
+bsp_pin_no_t c_bsp_board_led_idx_to_pin(bsp_idx_t button_idx);
 
 bsp_idx_t c_bsp_board_pin_to_button_idx(bsp_pin_no_t pin_no);
 bsp_pin_no_t c_bsp_board_button_idx_to_pin(bsp_idx_t button_idx);

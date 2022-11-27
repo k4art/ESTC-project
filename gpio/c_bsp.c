@@ -58,6 +58,19 @@ int c_bsp_board_button_state_get(bsp_idx_t button_idx)
   return nrf_gpio_pin_read(m_board_buttons_list[button_idx]) == BUTTON_ACTIVE_STATE;
 }
 
+bsp_idx_t c_bsp_board_pin_to_led_idx(bsp_pin_no_t pin_no)
+{
+  for (size_t i = 0; i < LEDS_NUMBER; i++)
+  {
+    if (m_board_leds_list[i] == pin_no)
+    {
+      return i;
+    }
+  }
+
+  UNREACHABLE_RETURN(0);
+}
+
 bsp_pin_no_t c_bsp_board_led_idx_to_pin(bsp_idx_t led_idx)
 {
   NRFX_ASSERT(IS_VALID_LED_IDX(led_idx));
