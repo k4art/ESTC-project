@@ -12,18 +12,18 @@
 
 /*
  * State Transitions and Events Triggering:
- * |-----------------------------|-----------------------------|-----------------------------|-------------------------|----------------|
- * | State \ Action              | RAW_CLICK                   | DOUBLE_CLICK_INTENT_TIMEOUT | LONG_PRESS_START        | LONG_PRESS_END |
- * |-----------------------------|-----------------------------|-----------------------------|-------------------------|----------------|
- * | NEUTRAL                     | WAITING_DOUBLE_CLICK_INTENT | NEUTRAL                     | LONG_PRESSING           | Ignored        |
- * |                             | none                        | none                        | LONG_PRESS_START        |                |
- * |-----------------------------|-----------------------------|-----------------------------|-------------------------|----------------|
- * | WAITING_DOUBLE_CLICK_INTENT | NEUTRAL                     | NEUTRAL                     | LONG_PRESSING           | Ignored        |
- * |                             | DOUBLE_CLICK                | CLICK                       | CLICK, LONG_PRESS_START |                |
- * |-----------------------------|-----------------------------|-----------------------------|-------------------------|----------------|
- * | LONG_PRESSING               | Ignored                     | Ignored                     | Ignored                 | NEUTRAL        |
- * |                             |                             |                             |                         | LONG_PRESS_END |
- * |-----------------------------|-----------------------------|-----------------------------|-------------------------|----------------|
+ * |-----------------------------|-----------------------------|-----------------------------|-------------------------|-----------------|
+ * | State \ Action              | RAW_CLICK                   | DOUBLE_CLICK_INTENT_TIMEOUT | LONG_PRESS_START        | LONG_PRESS_STOP |
+ * |-----------------------------|-----------------------------|-----------------------------|-------------------------|-----------------|
+ * | NEUTRAL                     | WAITING_DOUBLE_CLICK_INTENT | NEUTRAL                     | LONG_PRESSING           | Ignored         |
+ * |                             | none                        | none                        | LONG_PRESS_START        |                 |
+ * |-----------------------------|-----------------------------|-----------------------------|-------------------------|-----------------|
+ * | WAITING_DOUBLE_CLICK_INTENT | NEUTRAL                     | NEUTRAL                     | LONG_PRESSING           | Ignored         |
+ * |                             | DOUBLE_CLICK                | CLICK                       | CLICK, LONG_PRESS_START |                 |
+ * |-----------------------------|-----------------------------|-----------------------------|-------------------------|-----------------|
+ * | LONG_PRESSING               | Ignored                     | Ignored                     | Ignored                 | NEUTRAL         |
+ * |                             |                             |                             |                         | LONG_PRESS_STOP |
+ * |-----------------------------|-----------------------------|-----------------------------|-------------------------|-----------------|
  */
 
 typedef enum
@@ -38,7 +38,7 @@ typedef enum
   BUTTON_ACTION_RAW_CLICK,
   BUTTON_ACTION_DOUBLE_CLICK_INTENT_TIMEOUT,
   BUTTON_ACTION_LONG_PRESS_START,
-  BUTTON_ACTION_LONG_PRESS_END,
+  BUTTON_ACTION_LONG_PRESS_STOP,
 } btn_action_t;
 
 typedef enum
@@ -46,7 +46,7 @@ typedef enum
   BUTTON_EVENT_CLICK,
   BUTTON_EVENT_DOUBLE_CLICK,
   BUTTON_EVENT_LONG_PRESS_START,
-  BUTTON_EVENT_LONG_PRESS_END,
+  BUTTON_EVENT_LONG_PRESS_STOP,
 } btn_event_t;
 
 typedef struct btn_info_s
@@ -57,7 +57,7 @@ typedef struct btn_info_s
   xbutton_handler_t on_click;
   xbutton_handler_t on_double_click;
   xbutton_handler_t on_long_press_start;
-  xbutton_handler_t on_long_press_end;
+  xbutton_handler_t on_long_press_stop;
 } btn_info_t;
 
 typedef struct xbutton_control_block_s
@@ -96,9 +96,9 @@ static void emit_event(uint8_t button_idx, btn_event_t event)
       CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_long_press_start, button_idx);
       break;
 
-    case BUTTON_EVENT_LONG_PRESS_END:
-      NRF_LOG_INFO("[xbutton]: %d - LONG_PRESS_END", button_idx);
-      CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_long_press_end, button_idx);
+    case BUTTON_EVENT_LONG_PRESS_STOP:
+      NRF_LOG_INFO("[xbutton]: %d - LONG_PRESS_STOP", button_idx);
+      CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_long_press_stop, button_idx);
       break;
   }
 }
@@ -161,11 +161,11 @@ static void button_fsm_next_state(uint8_t button_idx, btn_action_t action)
       break;
 
     case BUTTON_STATE_LONG_PRESSING:
-      if (action == BUTTON_ACTION_LONG_PRESS_END)
+      if (action == BUTTON_ACTION_LONG_PRESS_STOP)
       {
         m_cb.btns[button_idx].state = BUTTON_STATE_NEUTRAL;
 
-        emit_event(button_idx, BUTTON_EVENT_LONG_PRESS_END);
+        emit_event(button_idx, BUTTON_EVENT_LONG_PRESS_STOP);
       }
       break;
   }
@@ -200,9 +200,9 @@ static void handle_long_press_start(uint8_t button_idx)
   button_fsm_next_state(button_idx, BUTTON_ACTION_LONG_PRESS_START);
 }
 
-static void handle_long_press_end(uint8_t button_idx)
+static void handle_long_press_stop(uint8_t button_idx)
 {
-  button_fsm_next_state(button_idx, BUTTON_ACTION_LONG_PRESS_END);
+  button_fsm_next_state(button_idx, BUTTON_ACTION_LONG_PRESS_STOP);
 }
 
 nrfx_err_t xbutton_enable(uint8_t button_idx, bool high_accuracy)
@@ -215,7 +215,7 @@ nrfx_err_t xbutton_enable(uint8_t button_idx, bool high_accuracy)
     btn_clickable_on_click(button_idx, handle_raw_click);
 
     btn_clickable_on_long_press_start(button_idx, handle_long_press_start);
-    btn_clickable_on_long_press_end(button_idx, handle_long_press_end);
+    btn_clickable_on_long_press_stop(button_idx, handle_long_press_stop);
   }
 
   return err_code;
@@ -234,4 +234,4 @@ SUPPORT_EVENT_REGISTER(click)
 SUPPORT_EVENT_REGISTER(double_click)
 
 SUPPORT_EVENT_REGISTER(long_press_start)
-SUPPORT_EVENT_REGISTER(long_press_end)
+SUPPORT_EVENT_REGISTER(long_press_stop)

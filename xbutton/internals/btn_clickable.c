@@ -18,18 +18,18 @@
 
 /*
  * State Transitions and Events Triggering:
- * |----------------------|----------------------|-------------------------|----------------------|
- * | State \ Action       | PRESS                | RELEASE                 | CLICK_INTENT_TIMEOUT |
- * |----------------------|----------------------|-------------------------|----------------------|
- * | NEUTRAL              | WAITING_CLICK_INTENT | Ignored                 | Ignored              |
- * |                      | PRESS                |                         |                      |
- * |----------------------|----------------------|-------------------------|----------------------|
- * | WAITING_CLICK_INTENT | Ignored              | NEUTRAL                 | LONG_PRESSING        |
- * |                      |                      | RELEASE, CLICK          | LONG_PRESS_START     |
- * |----------------------|----------------------|-------------------------|----------------------|
- * | LONG_PRESSING        | Ignored              | NEUTRAL                 | Ignored              |
- * |                      |                      | RELEASE, LONG_PRESS_END |                      |
- * |----------------------|----------------------|-------------------------|----------------------|
+ * |----------------------|----------------------|--------------------------|----------------------|
+ * | State \ Action       | PRESS                | RELEASE                  | CLICK_INTENT_TIMEOUT |
+ * |----------------------|----------------------|--------------------------|----------------------|
+ * | NEUTRAL              | WAITING_CLICK_INTENT | Ignored                  | Ignored              |
+ * |                      | PRESS                |                          |                      |
+ * |----------------------|----------------------|--------------------------|----------------------|
+ * | WAITING_CLICK_INTENT | Ignored              | NEUTRAL                  | LONG_PRESSING        |
+ * |                      |                      | RELEASE, CLICK           | LONG_PRESS_START     |
+ * |----------------------|----------------------|--------------------------|----------------------|
+ * | LONG_PRESSING        | Ignored              | NEUTRAL                  | Ignored              |
+ * |                      |                      | RELEASE, LONG_PRESS_STOP |                      |
+ * |----------------------|----------------------|--------------------------|----------------------|
  */
 
 typedef enum
@@ -52,7 +52,7 @@ typedef enum
   BUTTON_EVENT_RELEASE,
   BUTTON_EVENT_CLICK,
   BUTTON_EVENT_LONG_PRESS_START,
-  BUTTON_EVENT_LONG_PRESS_END,
+  BUTTON_EVENT_LONG_PRESS_STOP,
 } btn_event_t;
 
 typedef struct btn_info_s
@@ -63,7 +63,7 @@ typedef struct btn_info_s
   btn_clickable_handler_t on_release;
   btn_clickable_handler_t on_click;
   btn_clickable_handler_t on_long_press_start;
-  btn_clickable_handler_t on_long_press_end;
+  btn_clickable_handler_t on_long_press_stop;
 } btn_info_t;
 
 typedef struct
@@ -99,9 +99,9 @@ static void emit_event(uint8_t button_idx, btn_event_t event)
       CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_long_press_start, button_idx);
       break;
 
-    case BUTTON_EVENT_LONG_PRESS_END:
-      NRF_LOG_INFO("[btn_clickable]: [%d] => event:LONG_PRESS_END", button_idx);
-      CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_long_press_end, button_idx);
+    case BUTTON_EVENT_LONG_PRESS_STOP:
+      NRF_LOG_INFO("[btn_clickable]: [%d] => event:LONG_PRESS_STOP", button_idx);
+      CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_long_press_stop, button_idx);
       break;
   }
 }
@@ -150,7 +150,7 @@ static void button_fsm_next_state(uint8_t button_idx,
         m_cb.btns[button_idx].state = BUTTON_STATE_NEUTRAL;
 
         emit_event(button_idx, BUTTON_EVENT_RELEASE);
-        emit_event(button_idx, BUTTON_EVENT_LONG_PRESS_END);
+        emit_event(button_idx, BUTTON_EVENT_LONG_PRESS_STOP);
       }
       break;
   }
@@ -209,4 +209,4 @@ SUPPORT_EVENT_REGISTER(press)
 SUPPORT_EVENT_REGISTER(release)
 SUPPORT_EVENT_REGISTER(click)
 SUPPORT_EVENT_REGISTER(long_press_start)
-SUPPORT_EVENT_REGISTER(long_press_end)
+SUPPORT_EVENT_REGISTER(long_press_stop)
