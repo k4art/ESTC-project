@@ -126,33 +126,27 @@ static void blinking_update_with_blink_period_ms(blinking_led_t * led, uint16_t 
   led->is_blinking = true;
 }
 
-static void blinking_off(blinking_led_t * led)
+static void blinking_led_off(blinking_led_t * led)
 {
   blinking_update_with_singular_intensity_percent(led, 0);
 }
 
-static void blinking_on(blinking_led_t * led)
+static void blinking_led_on(blinking_led_t * led)
 {
   blinking_update_with_singular_intensity_percent(led, 100);
 }
 
-static void blinking_slow(blinking_led_t * led)
+static void blinking_led_slow(blinking_led_t * led)
 {
   blinking_update_with_blink_period_ms(led, BLINKING_LED_MODE_SLOW_BLINK_PERIOD_MS);
 }
 
-static void blinking_fast(blinking_led_t * led)
+static void blinking_led_fast(blinking_led_t * led)
 {
   blinking_update_with_blink_period_ms(led, BLINKING_LED_MODE_FAST_BLINK_PERIOD_MS);
 }
 
-void blinking_init(void)
-{
-  // Since all series values are 0 by default, there is not need of the following line:
-  // blinking_off();
-}
-
-#define BLINKING_LED_PWM_CONFIG(only_pin)                       \
+#define BLINKING_LED_PWM_CONFIG(only_pin)                   \
   (nrfx_pwm_config_t)                                       \
   {                                                         \
     .output_pins =                                          \
@@ -199,19 +193,19 @@ void blinking_led_set_mode(blinking_led_t * led, blinking_led_mode_t mode)
   switch (mode)
   {
     case BLINKING_LED_MODE_OFF:
-      blinking_off(led);
+      blinking_led_off(led);
       break;
 
     case BLINKING_LED_MODE_ON:
-      blinking_on(led);
+      blinking_led_on(led);
       break;
 
     case BLINKING_LED_MODE_BLINKS_SLOW:
-      blinking_slow(led);
+      blinking_led_slow(led);
       break;
 
     case BLINKING_LED_MODE_BLINKS_FAST:
-      blinking_fast(led);
+      blinking_led_fast(led);
       break;
   }
 }
