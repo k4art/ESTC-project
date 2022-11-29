@@ -38,15 +38,7 @@ typedef struct rgb_led_s
   nrfx_pwm_t * p_pwm_inst;
 } rgb_led_t;
 
-#define RGB_LED(rgb_led_index, p_pwm_instance)  \
-  (rgb_led_t)                                   \
-  {                                             \
-    .rgb_led_idx = rgb_led_index,               \
-    .p_pwm_inst  = p_pwm_instance,              \
-    .pwm_values  = RGB_LED_PWM_VALUES(0, 0, 0), \
-  }
-
-void rgb_led_enable(rgb_led_t * rgb_led, nrfx_pwm_t * p_pwm_instance);
+void rgb_led_enable(rgb_led_t * rgb_led, bsp_idx_t rgb_led_idx, nrfx_pwm_t * p_pwm_instance);
 void rgb_led_set_color(rgb_led_t * rgb_led, rgb_color_t rgb);
 
 #endif

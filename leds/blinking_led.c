@@ -173,8 +173,11 @@ static void blinking_led_fast(blinking_led_t * led)
     .end_delay          = 0,                                \
   }
 
-void blinking_led_enable(blinking_led_t * led)
+void blinking_led_enable(blinking_led_t * led, bsp_idx_t led_idx, nrfx_pwm_t * p_pwm_inst)
 {
+  led->led_idx = led_idx;
+  led->p_pwm_inst = p_pwm_inst;
+
   bsp_pin_no_t led_pin = c_bsp_board_led_idx_to_pin(led->led_idx);
 
   // currently this module does not support multi LEDs
