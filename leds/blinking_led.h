@@ -24,15 +24,7 @@ typedef struct blinky_led_s
   nrf_pwm_sequence_t pwm_seq;
 } blinking_led_t;
 
-#define BLINKING_LED(led_index, p_pwm_instance) \
-  (blinking_led_t)                              \
-  {                                             \
-    .led_idx = led_index,                       \
-    .p_pwm_inst = p_pwm_instance,               \
-    .is_blinking = false,                       \
-  }
-
-void blinking_led_enable(blinking_led_t * led);
+void blinking_led_enable(blinking_led_t * led, bsp_idx_t led_idx, nrfx_pwm_t * p_pwm_instanced);
 void blinking_led_set_mode(blinking_led_t * led, blinking_led_mode_t mode);
 
 #endif

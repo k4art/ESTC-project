@@ -35,9 +35,13 @@ static nrfx_err_t rgb_led_config_pwm_instance(rgb_led_t * rgb_led)
   return nrfx_pwm_init(rgb_led->p_pwm_inst, &config, NULL);
 }
 
-void rgb_led_enable(rgb_led_t * rgb_led, nrfx_pwm_t * p_pwm_instance)
+
+void rgb_led_enable(rgb_led_t * rgb_led, bsp_idx_t rgb_led_idx, nrfx_pwm_t * p_pwm_instance)
 {
-  rgb_led->p_pwm_inst = p_pwm_instance;
+  NRFX_ASSERT(IS_VALID_RGB_LED_IDX(rgb_led_idx));
+
+  rgb_led->rgb_led_idx = rgb_led_idx;
+  rgb_led->p_pwm_inst  = p_pwm_instance;
 
   rgb_led->pwm_seq = (nrf_pwm_sequence_t)
   {
