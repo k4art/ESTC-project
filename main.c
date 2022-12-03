@@ -48,7 +48,7 @@ int main(void)
 
   hsv_color_t default_color = calc_default_hsv(DEVICE_ID);
 
-  color_picker_set_hsv(default_color);
+  color_picker_restore_or_set_default_hsv(default_color);
   color_picker_enable(USER_BUTTON_IDX, ONLY_RGB_LED_IDX, SINGLE_LED_IDX);
 
   while (true)
