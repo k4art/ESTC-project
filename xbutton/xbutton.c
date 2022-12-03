@@ -8,37 +8,45 @@
 
 #include "xbutton.h"
 
-#define DOUBLE_CLICK_MAX_SECOND_CLICK_WAITING_TIME_MS 400
+#define DOUBLE_CLICK_MAX_SECOND_CLICK_WAITING_TIME_MS 300
 
 /*
  * State Transitions and Events Triggering:
- * |-----------------------------|-----------------------------|-----------------------------|
- * | State \ Action              | RAW_CLICK                   | DOUBLE_CLICK_INTENT_TIMEOUT |
- * |-----------------------------|-----------------------------|-----------------------------|
- * | NEUTRAL                     | WAITING_DOUBLE_CLICK_INTENT | NEUTRAL                     |
- * |                             | none                        | none                        |
- * |-----------------------------|-----------------------------|-----------------------------|
- * | WAITING_DOUBLE_CLICK_INTENT | NEUTRAL                     | NEUTRAL                     |
- * |                             | DOUBLE_CLICK                | CLICK                       |
- * |-----------------------------|-----------------------------|-----------------------------|
+ * |-----------------------------|-----------------------------|-----------------------------|-------------------------|-----------------|
+ * | State \ Action              | RAW_CLICK                   | DOUBLE_CLICK_INTENT_TIMEOUT | LONG_PRESS_START        | LONG_PRESS_STOP |
+ * |-----------------------------|-----------------------------|-----------------------------|-------------------------|-----------------|
+ * | NEUTRAL                     | WAITING_DOUBLE_CLICK_INTENT | NEUTRAL                     | LONG_PRESSING           | Ignored         |
+ * |                             | none                        | none                        | LONG_PRESS_START        |                 |
+ * |-----------------------------|-----------------------------|-----------------------------|-------------------------|-----------------|
+ * | WAITING_DOUBLE_CLICK_INTENT | NEUTRAL                     | NEUTRAL                     | LONG_PRESSING           | Ignored         |
+ * |                             | DOUBLE_CLICK                | CLICK                       | CLICK, LONG_PRESS_START |                 |
+ * |-----------------------------|-----------------------------|-----------------------------|-------------------------|-----------------|
+ * | LONG_PRESSING               | Ignored                     | Ignored                     | Ignored                 | NEUTRAL         |
+ * |                             |                             |                             |                         | LONG_PRESS_STOP |
+ * |-----------------------------|-----------------------------|-----------------------------|-------------------------|-----------------|
  */
 
 typedef enum
 {
   BUTTON_STATE_NEUTRAL,
   BUTTON_STATE_WAITING_DOUBLE_CLICK_INTENT,
+  BUTTON_STATE_LONG_PRESSING,
 } btn_state_t;
 
 typedef enum
 {
   BUTTON_ACTION_RAW_CLICK,
   BUTTON_ACTION_DOUBLE_CLICK_INTENT_TIMEOUT,
+  BUTTON_ACTION_LONG_PRESS_START,
+  BUTTON_ACTION_LONG_PRESS_STOP,
 } btn_action_t;
 
 typedef enum
 {
   BUTTON_EVENT_CLICK,
   BUTTON_EVENT_DOUBLE_CLICK,
+  BUTTON_EVENT_LONG_PRESS_START,
+  BUTTON_EVENT_LONG_PRESS_STOP,
 } btn_event_t;
 
 typedef struct btn_info_s
@@ -48,6 +56,8 @@ typedef struct btn_info_s
 
   xbutton_handler_t on_click;
   xbutton_handler_t on_double_click;
+  xbutton_handler_t on_long_press_start;
+  xbutton_handler_t on_long_press_stop;
 } btn_info_t;
 
 typedef struct xbutton_control_block_s
@@ -80,7 +90,29 @@ static void emit_event(uint8_t button_idx, btn_event_t event)
       NRF_LOG_INFO("[xbutton]: %d - DOUBLE_CLICK", button_idx);
       CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_double_click, button_idx);
       break;
+
+    case BUTTON_EVENT_LONG_PRESS_START:
+      NRF_LOG_INFO("[xbutton]: %d - LONG_PRESS_START", button_idx);
+      CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_long_press_start, button_idx);
+      break;
+
+    case BUTTON_EVENT_LONG_PRESS_STOP:
+      NRF_LOG_INFO("[xbutton]: %d - LONG_PRESS_STOP", button_idx);
+      CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_long_press_stop, button_idx);
+      break;
   }
+}
+
+static void start_double_click_intent_timeout_timer(uint8_t button_idx)
+{
+  app_timer_start(m_double_click_timeout_timer,
+                  APP_TIMER_TICKS(DOUBLE_CLICK_MAX_SECOND_CLICK_WAITING_TIME_MS),
+                  (void *) (uint32_t) button_idx);
+}
+
+static void stop_double_click_intent_timeout_timer(void)
+{
+  app_timer_stop(m_double_click_timeout_timer);
 }
 
 static void button_fsm_next_state(uint8_t button_idx, btn_action_t action)
@@ -93,19 +125,47 @@ static void button_fsm_next_state(uint8_t button_idx, btn_action_t action)
       if (action == BUTTON_ACTION_RAW_CLICK)
       {
         m_cb.btns[button_idx].state = BUTTON_STATE_WAITING_DOUBLE_CLICK_INTENT;
+        start_double_click_intent_timeout_timer(button_idx);
+      }
+      else if (action == BUTTON_ACTION_LONG_PRESS_START)
+      {
+        m_cb.btns[button_idx].state = BUTTON_STATE_LONG_PRESSING;
+        emit_event(button_idx, BUTTON_EVENT_LONG_PRESS_START);
       }
       break;
 
     case BUTTON_STATE_WAITING_DOUBLE_CLICK_INTENT:
       if (action == BUTTON_ACTION_RAW_CLICK)
       {
+        stop_double_click_intent_timeout_timer();
+
         m_cb.btns[button_idx].state = BUTTON_STATE_NEUTRAL;
+
         emit_event(button_idx, BUTTON_EVENT_DOUBLE_CLICK);
       }
       else if (action == BUTTON_ACTION_DOUBLE_CLICK_INTENT_TIMEOUT)
       {
         m_cb.btns[button_idx].state = BUTTON_STATE_NEUTRAL;
+
         emit_event(button_idx, BUTTON_EVENT_CLICK);
+      }
+      else if (action == BUTTON_ACTION_LONG_PRESS_START)
+      {
+        stop_double_click_intent_timeout_timer();
+
+        m_cb.btns[button_idx].state = BUTTON_STATE_LONG_PRESSING;
+
+        emit_event(button_idx, BUTTON_EVENT_CLICK);
+        emit_event(button_idx, BUTTON_EVENT_LONG_PRESS_START);
+      }
+      break;
+
+    case BUTTON_STATE_LONG_PRESSING:
+      if (action == BUTTON_ACTION_LONG_PRESS_STOP)
+      {
+        m_cb.btns[button_idx].state = BUTTON_STATE_NEUTRAL;
+
+        emit_event(button_idx, BUTTON_EVENT_LONG_PRESS_STOP);
       }
       break;
   }
@@ -116,10 +176,6 @@ static void handle_raw_click(uint8_t button_idx)
   NRFX_ASSERT(btn_is_used(button_idx));
 
   button_fsm_next_state(button_idx, BUTTON_ACTION_RAW_CLICK);
-
-  app_timer_start(m_double_click_timeout_timer,
-                  APP_TIMER_TICKS(DOUBLE_CLICK_MAX_SECOND_CLICK_WAITING_TIME_MS),
-                  (void *) (uint32_t) button_idx);
 }
 
 static void handle_timer_double_click_timeout(void * context)
@@ -139,6 +195,16 @@ void xbutton_init(void)
                    handle_timer_double_click_timeout);
 }
 
+static void handle_long_press_start(uint8_t button_idx)
+{
+  button_fsm_next_state(button_idx, BUTTON_ACTION_LONG_PRESS_START);
+}
+
+static void handle_long_press_stop(uint8_t button_idx)
+{
+  button_fsm_next_state(button_idx, BUTTON_ACTION_LONG_PRESS_STOP);
+}
+
 nrfx_err_t xbutton_enable(uint8_t button_idx, bool high_accuracy)
 {
   NRFX_ASSERT(!btn_is_used(button_idx));
@@ -147,21 +213,25 @@ nrfx_err_t xbutton_enable(uint8_t button_idx, bool high_accuracy)
   if (err_code == NRFX_SUCCESS)
   {
     btn_clickable_on_click(button_idx, handle_raw_click);
+
+    btn_clickable_on_long_press_start(button_idx, handle_long_press_start);
+    btn_clickable_on_long_press_stop(button_idx, handle_long_press_stop);
   }
 
   return err_code;
 }
 
-void xbutton_on_click(uint8_t button_idx, xbutton_handler_t handler)
-{
-  NRFX_ASSERT(btn_is_used(button_idx));
+#define SUPPORT_EVENT_REGISTER(event)                   \
+  void xbutton_on_ ## event (uint8_t button_idx,        \
+                             xbutton_handler_t handler) \
+  {                                                     \
+    NRFX_ASSERT(handler != NULL)                        \
+    NRFX_ASSERT(btn_is_used(button_idx));               \
+    m_cb.btns[button_idx].on_ ## event = handler;       \
+  }
 
-  m_cb.btns[button_idx].on_click = handler;
-}
+SUPPORT_EVENT_REGISTER(click)
+SUPPORT_EVENT_REGISTER(double_click)
 
-void xbutton_on_double_click(uint8_t button_idx, xbutton_handler_t handler)
-{
-  NRFX_ASSERT(btn_is_used(button_idx));
-
-  m_cb.btns[button_idx].on_double_click = handler;
-}
+SUPPORT_EVENT_REGISTER(long_press_start)
+SUPPORT_EVENT_REGISTER(long_press_stop)

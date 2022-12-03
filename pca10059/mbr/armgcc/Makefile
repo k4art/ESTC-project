@@ -15,7 +15,12 @@ $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
 
 # Source files common to all targets
 SRC_FILES += \
-  $(PROJ_DIR)/blinking.c \
+  $(PROJ_DIR)/color_picker/color_picker.c \
+  $(PROJ_DIR)/color_picker/controller/color_picker_controller.c \
+  $(PROJ_DIR)/color_picker/controller/slider.c \
+  $(PROJ_DIR)/colors/colors.c \
+  $(PROJ_DIR)/leds/rgb_led.c \
+  $(PROJ_DIR)/leds/blinking_led.c \
   $(PROJ_DIR)/xbutton/xbutton.c \
   $(PROJ_DIR)/xbutton/internals/btn_debounced.c \
   $(PROJ_DIR)/xbutton/internals/btn_clickable.c \
@@ -27,6 +32,7 @@ SRC_FILES += \
   $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_power.c \
   $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_uart.c \
   $(SDK_ROOT)/modules/nrfx/soc/nrfx_atomic.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_pwm.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_clock.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_power.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_uart.c \
