@@ -17,4 +17,7 @@
 
 #define PARTIALY_IMPLEMENTED_ASSUMING(statement) NRFX_ASSERT(statement)
 
+#define SIZEOF_IN_BITS(v) (sizeof(v) * CHAR_BIT)
+#define IS_POWER_OF_2(v)  (v && !(v & (v - 1)))
+
 #endif
