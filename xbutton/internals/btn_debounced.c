@@ -115,7 +115,8 @@ static void button_fsm_next_state(uint8_t button_idx, btn_action_t action)
       {
         // NRF_LOG_INFO("[btn_debounced]: [%d] - action release", button_idx);
 
-        m_cb.btns[button_idx].state = BUTTON_STATE_UP;
+        m_cb.btns[button_idx].state = BUTTON_STATE_DEBOUNCING;
+        start_debounce_timeout_timer(button_idx);
         emit_event(button_idx, BUTTON_EVENT_RELEASE);
       }
       else { NRFX_ASSERT(false); }
@@ -131,7 +132,6 @@ static void button_fsm_next_state(uint8_t button_idx, btn_action_t action)
       else if (action == BUTTON_ACTION_DEBOUNCE_RELEASED)
       {
         m_cb.btns[button_idx].state = BUTTON_STATE_UP;
-        emit_event(button_idx, BUTTON_EVENT_RELEASE);
       }
       else { NRFX_ASSERT(false); }
       break;
