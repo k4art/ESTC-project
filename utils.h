@@ -15,4 +15,6 @@
     return return_value;                 \
   } while (0)                            \
 
+#define PARTIALY_IMPLEMENTED_ASSUMING(statement) NRFX_ASSERT(statement)
+
 #endif
