@@ -127,6 +127,9 @@
 
 // </e>
 
+#ifndef NRF_DFU_APP_DATA_AREA_SIZE
+#define NRF_DFU_APP_DATA_AREA_SIZE 0x3000
+#endif
 
 #ifndef NRFX_NVMC_ENABLED
 #define NRFX_NVMC_ENABLED 1
