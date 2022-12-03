@@ -1,7 +1,15 @@
 #ifndef __UTILS_H
 #define __UTILS_H
 
+#include <limits.h>
+
 #include "nrfx.h"
+
+#define WORD_SIZE 4
+#define NULL_ADDR 0
+
+#define IS_WORD_ALIGNED(n)             (n % WORD_SIZE  == 0)
+#define LEAST_MULTIPLE_OF_WORD_SIZE(n) (NRFX_CEIL_DIV(n, WORD_SIZE) * WORD_SIZE)
 
 #define CALL_IF_NOT_NULL(fn, ...)    \
   do                                 \
