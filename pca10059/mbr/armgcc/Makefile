@@ -15,6 +15,10 @@ $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
 
 # Source files common to all targets
 SRC_FILES += \
+  $(PROJ_DIR)/flash/fvarstorage/fvarstorage.c \
+  $(PROJ_DIR)/flash/fvarstorage/internals/fvarstorage_pages.c \
+  $(PROJ_DIR)/flash/fvarstorage/internals/fvarstorage_current_page.c \
+  $(PROJ_DIR)/flash/fappdata.c \
   $(PROJ_DIR)/color_picker/color_picker.c \
   $(PROJ_DIR)/color_picker/controller/color_picker_controller.c \
   $(PROJ_DIR)/color_picker/controller/slider.c \
