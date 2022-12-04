@@ -155,7 +155,7 @@ void fvarstorage_pages_track_current_page_idx(fvarstorage_t * fvarstorage)
 
   for (int32_t page_idx = 0; page_idx < SIZEOF_IN_BITS(pages_mask); page_idx++)
   {
-    if ((pages_mask & (1 << page_idx)) == 0) continue;
+    if (!CHECK_MASK_BIT_SET(pages_mask, page_idx)) continue;
 
     uint32_t last_record_addr = find_last_record_addr_in_page(page_idx);
 
