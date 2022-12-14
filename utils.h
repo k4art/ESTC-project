@@ -5,8 +5,9 @@
 
 #include "nrfx.h"
 
-#define WORD_SIZE 4
-#define NULL_ADDR 0
+#define WORD_SIZE     4
+#define NULL_ADDR     0
+#define INVALID_CHAR -1
 
 #define IS_WORD_ALIGNED(n)             (n % WORD_SIZE  == 0)
 #define LEAST_MULTIPLE_OF_WORD_SIZE(n) (NRFX_CEIL_DIV(n, WORD_SIZE) * WORD_SIZE)
