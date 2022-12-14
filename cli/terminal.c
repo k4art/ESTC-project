@@ -12,7 +12,13 @@
 
 #define TERMINAL_WRITE_BUFFER_SIZE 255
 
+#define TERMINAL_PROMPT "> "
+
 #define ASCII_DEL 0x7F
+#define ASCII_FF  0x0C // ^L
+
+#define ASCII_SEQ_CLEAR_SCREEN              "\033[2J"
+#define ASCII_SEQ_CURSOR_TO_TOP_LEFT_CORNER "\033[;H"
 
 typedef struct terminal_control_block_s
 {
@@ -67,10 +73,16 @@ static bool is_line_ending(char ch)
   return ch == '\r' || ch == '\n';
 }
 
+static void terminal_prompt_display_same_line(void)
+{
+  terminal_writef("> ");
+  terminal_flush();
+}
+
 static void terminal_prompt_display(void)
 {
-  terminal_writef("\r\n> ");
-  terminal_flush();
+  terminal_writef("\r\n");
+  terminal_prompt_display_same_line();
 }
 
 void terminal_init(char * line_buffer, size_t line_buffer_size)
@@ -128,6 +140,19 @@ bool terminal_readline(void)
         terminal_writef("\b\x20\b");
         terminal_flush();
       }
+
+      return false;
+    }
+
+    if (m_cb.input_char == ASCII_FF)
+    {
+      terminal_writef(ASCII_SEQ_CLEAR_SCREEN ""
+                      ASCII_SEQ_CURSOR_TO_TOP_LEFT_CORNER ""
+                      TERMINAL_PROMPT);
+
+      terminal_writef("%.*s", m_cb.line_buffer_used_bytes, m_cb.line_buffer);
+      
+      terminal_flush();
 
       return false;
     }
