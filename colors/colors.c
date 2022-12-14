@@ -2,6 +2,13 @@
 
 #include "colors.h"
 
+const uint8_t HSV_COMPONENT_TOP_VALUES[HSV_COMPONENTS_NUMBER] =
+{
+  H_COMPONENT_TOP_VALUE,
+  S_COMPONENT_TOP_VALUE,
+  V_COMPONENT_TOP_VALUE,
+};
+
 /*
  * This implementation assumes that the following conditions are true.
  */
