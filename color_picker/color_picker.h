@@ -1,6 +1,7 @@
 #ifndef __COLOR_PICKER_H
 #define __COLOR_PICKER_H
 
+#include "gpio/c_bsp.h"
 #include "colors/colors.h"
 
 void color_picker_init(void);
