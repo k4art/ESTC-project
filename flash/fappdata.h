@@ -41,7 +41,7 @@ STATIC_ASSERT(FAPPDATA_PAGE_END_ADDR_BY_IDX(0) == FAPPDATA_END_ADDR);
 #define FAPPDATA_IS_VALID_PAGE_ADDR(page_addr) \
    (page_addr >= FAPPDATA_START_ADDR &&        \
     page_addr < FAPPDATA_END_ADDR &&           \
-    page_addr % FAPPDATA_PAGE_SIZE)
+    page_addr % FAPPDATA_PAGE_SIZE == 0)
 
 uint32_t fappdata_word_read(uint32_t addr);
 void fappdata_word_write(uint32_t addr, uint32_t word);
