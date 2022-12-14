@@ -9,6 +9,7 @@
 #include "fvarstorage.h"
 
 #include "color_picker/controller/color_picker_controller.h"
+#include "color_picker/cli/color_picker.cli.h"
 
 #include "color_picker/color_picker.h"
 
@@ -73,6 +74,8 @@ void color_picker_init(void)
   fvarstorage_init(&m_cb.fstorage,
                    COLOR_PICKER_FAPPDATA_COLOR_VARIABLE_ID,
                    FAPPDATA_PAGE_MASK_BY_IDX(0) | FAPPDATA_PAGE_MASK_BY_IDX(1));
+
+  color_picker_cli_register();
 }
 
 /*
@@ -107,6 +110,7 @@ void color_picker_enable(bsp_idx_t button_idx, bsp_idx_t rgb_led_idx, bsp_idx_t 
 
   rgb_led_enable(&m_cb.viewer_color_rgb_led, rgb_led_idx, &m_cb.rgb_led_pwm_inst);
   blinking_led_enable(&m_cb.status_blinking_led, status_led_idx, &m_cb.status_led_pwm_inst);
+
 
   color_picker_controller_enable(USER_BUTTON_IDX, &m_cb.status_blinking_led);
   color_picker_controller_on_input_change_hsv(hsv_color_input_change_handler);
