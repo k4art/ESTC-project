@@ -33,7 +33,10 @@ static void initialize(void)
   c_bsp_board_init();
 
   logs_init();
+
+#if NRFX_CHECK(ESTC_USB_CLI_ENABLED)
   cli_init();
+#endif
 
   color_picker_init();
 }
@@ -60,7 +63,10 @@ int main(void)
 
   while (true)
   {
+#if NRFX_CHECK(ESTC_USB_CLI_ENABLED)
     cli_process();
+#endif
+
     keep_usb_logging();
   }
 

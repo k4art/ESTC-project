@@ -6,6 +6,8 @@ DFU_PACKAGE      := $(OUTPUT_DIRECTORY)/nrf52840_xxaa.dfu
 
 PROJ_DIR := ../../..
 
+ESTC_USB_CLI_ENABLED ?= 1
+
 ifndef SDK_ROOT
   $(error SDK_ROOT is not set)
 endif
@@ -158,6 +160,8 @@ LIB_FILES += \
 OPT = -O3 -g3
 # Uncomment the line below to enable link time optimization
 #OPT += -flto
+
+CFLAGS += -DESTC_USB_CLI_ENABLED=$(ESTC_USB_CLI_ENABLED)
 
 # C flags common to all targets
 CFLAGS += $(OPT)

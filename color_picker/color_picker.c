@@ -75,7 +75,9 @@ void color_picker_init(void)
                    COLOR_PICKER_FAPPDATA_COLOR_VARIABLE_ID,
                    FAPPDATA_PAGE_MASK_BY_IDX(0) | FAPPDATA_PAGE_MASK_BY_IDX(1));
 
+#if NRFX_CHECK(ESTC_USB_CLI_ENABLED)
   color_picker_cli_register();
+#endif
 }
 
 /*
