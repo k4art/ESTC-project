@@ -190,9 +190,11 @@ void xbutton_init(void)
 {
   btn_clickable_init();
 
-  app_timer_create(&m_double_click_timeout_timer,
-                   APP_TIMER_MODE_SINGLE_SHOT,
-                   handle_timer_double_click_timeout);
+  ret_code_t ret  = app_timer_create(&m_double_click_timeout_timer,
+                                     APP_TIMER_MODE_SINGLE_SHOT,
+                                     handle_timer_double_click_timeout);
+
+  APP_ERROR_CHECK(ret);
 }
 
 static void handle_long_press_start(uint8_t button_idx)
@@ -212,6 +214,8 @@ nrfx_err_t xbutton_enable(uint8_t button_idx, bool high_accuracy)
 
   if (err_code == NRFX_SUCCESS)
   {
+    m_cb.btns[button_idx].is_used = true;
+
     btn_clickable_on_click(button_idx, handle_raw_click);
 
     btn_clickable_on_long_press_start(button_idx, handle_long_press_start);
