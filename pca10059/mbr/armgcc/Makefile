@@ -15,6 +15,11 @@ $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
 
 # Source files common to all targets
 SRC_FILES += \
+  $(PROJ_DIR)/cli/cli.c \
+  $(PROJ_DIR)/cli/terminal.c \
+  $(PROJ_DIR)/cli/utils/strfns.c \
+  $(PROJ_DIR)/cli/utils/args_parsers.c \
+  $(PROJ_DIR)/cli/internals/usb_connection.c \
   $(PROJ_DIR)/flash/fvarstorage/fvarstorage.c \
   $(PROJ_DIR)/flash/fvarstorage/internals/fvarstorage_pages.c \
   $(PROJ_DIR)/flash/fvarstorage/internals/fvarstorage_current_page.c \
