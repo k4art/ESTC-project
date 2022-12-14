@@ -161,6 +161,7 @@ OPT = -O3 -g3
 
 # C flags common to all targets
 CFLAGS += $(OPT)
+CFLAGS += -DDEBUG_NRF
 CFLAGS += -DUSE_APP_CONFIG
 CFLAGS += -Wno-array-bounds
 CFLAGS += -DAPP_TIMER_V2
