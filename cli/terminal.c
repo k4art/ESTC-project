@@ -12,6 +12,8 @@
 
 #define TERMINAL_WRITE_BUFFER_SIZE 255
 
+#define ASCII_DEL 0x7F
+
 typedef struct terminal_control_block_s
 {
   char * line_buffer;
@@ -46,7 +48,14 @@ static void line_buffer_null_terminate(void)
   m_cb.line_buffer[m_cb.line_buffer_used_bytes] = '\0';
 }
 
-static void line_buffer_append(char ch)
+static void line_buffer_pop(void)
+{
+  NRFX_ASSERT(!line_buffer_is_empty());
+
+  m_cb.line_buffer_used_bytes--;
+}
+
+static void line_buffer_push(char ch)
 {
   NRFX_ASSERT(!line_buffer_is_full());
 
@@ -95,6 +104,7 @@ bool terminal_readline(void)
   while ((m_cb.input_char = usb_connection_read_char()) != INVALID_CHAR)
   {
     NRF_LOG_DEBUG("[terminal]: line buffer bytes used = %d", m_cb.line_buffer_used_bytes);
+    NRF_LOG_DEBUG("[terminal]: new byte read [%02x]", m_cb.input_char);
 
     if (m_cb.input_char == '\r' || m_cb.input_char == '\n')
     {
@@ -109,6 +119,19 @@ bool terminal_readline(void)
       return true;
     }
 
+    if (m_cb.input_char == ASCII_DEL)
+    {
+      if (!line_buffer_is_empty())
+      {
+        line_buffer_pop();
+
+        terminal_writef("\b\x20\b");
+        terminal_flush();
+      }
+
+      return false;
+    }
+
     if (line_buffer_is_full())
     {
       /* The character is skipt without being echoed */
@@ -118,7 +141,7 @@ bool terminal_readline(void)
     terminal_writef("%c", m_cb.input_char);
     terminal_flush();
 
-    line_buffer_append(m_cb.input_char);
+    line_buffer_push(m_cb.input_char);
   }
 
   /* The characters received, if any, were processes in the while loop */
