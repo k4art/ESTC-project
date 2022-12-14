@@ -57,7 +57,7 @@ extern const uint8_t HSV_COMPONENT_TOP_VALUES[HSV_COMPONENTS_NUMBER];
 
 #define HSV_COLOR(h, s, v) (hsv_color_t) { .hue = h, .saturation = s, .value = v }
 
-/* The opposite convertation is not provided. */
+hsv_color_t rgb_to_hsv(rgb_color_t rgb);
 rgb_color_t hsv_to_rgb(hsv_color_t hsv);
 
 #endif

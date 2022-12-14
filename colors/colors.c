@@ -10,16 +10,55 @@ const uint8_t HSV_COMPONENT_TOP_VALUES[HSV_COMPONENTS_NUMBER] =
 };
 
 /*
+ * rgb_to_hsv and hsv_to_rgb are adopted from (by @leszek-szary)
+ * https://stackoverflow.com/questions/3018313/algorithm-to-convert-rgb-to-hsv-and-hsv-to-rgb-in-range-0-255-for-both
+ */
+
+hsv_color_t rgb_to_hsv(rgb_color_t rgb)
+{
+  uint8_t h, s, v;
+  uint8_t rgb_min, rgb_max;
+
+  rgb_min = rgb.red < rgb.green ? (rgb.red < rgb.blue ? rgb.red : rgb.blue) : (rgb.green < rgb.blue ? rgb.green : rgb.blue);
+  rgb_max = rgb.red > rgb.green ? (rgb.red > rgb.blue ? rgb.red : rgb.blue) : (rgb.green > rgb.blue ? rgb.green : rgb.blue);
+
+  v = rgb_max;
+
+  if (v == 0)
+  {
+    return HSV_COLOR(0, 0, 0);
+  }
+
+  s = NRFX_ROUNDED_DIV(255 * (rgb_max - rgb_min), v);
+
+  if (s == 0)
+  {
+    return HSV_COLOR(0, 0, v);
+  }
+
+  if (rgb_max == rgb.red)
+  {
+    h = 0 + NRFX_ROUNDED_DIV(43 * (rgb.green - rgb.blue), (rgb_max - rgb_min));
+  }
+  else if (rgb_max == rgb.green)
+  {
+    h = 85 + 43 * NRFX_ROUNDED_DIV((rgb.blue - rgb.red), (rgb_max - rgb_min));
+  }
+  else
+  {
+    h = 171 + 43 * NRFX_ROUNDED_DIV((rgb.red - rgb.green), (rgb_max - rgb_min));
+  }
+
+  return HSV_COLOR(h, s, v);
+}
+
+/*
  * This implementation assumes that the following conditions are true.
  */
 STATIC_ASSERT(H_COMPONENT_TOP_VALUE == 255);
 STATIC_ASSERT(S_COMPONENT_TOP_VALUE == 255);
 STATIC_ASSERT(V_COMPONENT_TOP_VALUE == 255);
 
-/*
- * Adopted from
- * https://stackoverflow.com/questions/3018313/algorithm-to-convert-rgb-to-hsv-and-hsv-to-rgb-in-range-0-255-for-both
- */
 rgb_color_t hsv_to_rgb(hsv_color_t hsv)
 {
   if (hsv.saturation == 0)
