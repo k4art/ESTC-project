@@ -74,6 +74,7 @@ typedef struct color_picker_controller_control_block_s
   blinking_led_t * p_status_led;
   color_picker_controller_mode_t current_mode;
   color_picker_controller_hsv_handler_t on_input_change;
+  color_picker_controller_hsv_handler_t on_edit_end;
   slider_t hsv_sliders[HSV_COMPONENTS_NUMBER];
 } color_picker_controller_control_block_t;
 
@@ -101,12 +102,6 @@ static size_t get_current_slider_idx(void)
   }
 
   UNREACHABLE_RETURN(0);
-}
-
-static void switch_mode(void)
-{
-  m_cb.current_mode = mode_followed_by(m_cb.current_mode);
-  blinking_led_set_mode(m_cb.p_status_led, status_led_mode_for_controller_mode(m_cb.current_mode));
 }
 
 static slider_t * get_slider_at(size_t slider_idx)
@@ -141,6 +136,18 @@ static hsv_color_t current_hsv_color_input(void)
   uint8_t v = slider_get_value(get_slider_at(V_SLIDER_IDX));
 
   return HSV_COLOR(h, s, v);
+}
+
+static void switch_mode(void)
+{
+  m_cb.current_mode = mode_followed_by(m_cb.current_mode);
+  blinking_led_set_mode(m_cb.p_status_led, status_led_mode_for_controller_mode(m_cb.current_mode));
+
+  if (m_cb.current_mode == COLOR_PICKER_CONTROLLER_MODE_VIEWER)
+  {
+    hsv_color_t color = current_hsv_color_input();
+    CALL_IF_NOT_NULL(m_cb.on_edit_end, color);
+  }
 }
 
 static void on_input_change_handler(slider_t * slider)
@@ -237,4 +244,9 @@ void color_picker_controller_enable(uint8_t button_idx, blinking_led_t * p_statu
 void color_picker_controller_on_input_change_hsv(color_picker_controller_hsv_handler_t handler)
 {
   m_cb.on_input_change = handler;
+}
+
+void color_picker_controller_on_edit_end(color_picker_controller_hsv_handler_t handler)
+{
+  m_cb.on_edit_end = handler;
 }

@@ -18,4 +18,6 @@ void color_picker_controller_enable(bsp_idx_t button_idx, blinking_led_t * p_sta
 
 void color_picker_controller_on_input_change_hsv(color_picker_controller_hsv_handler_t handler);
 
+void color_picker_controller_on_edit_end(color_picker_controller_hsv_handler_t handler);
+
 #endif

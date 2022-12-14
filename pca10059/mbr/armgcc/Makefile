@@ -15,6 +15,10 @@ $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
 
 # Source files common to all targets
 SRC_FILES += \
+  $(PROJ_DIR)/flash/fvarstorage/fvarstorage.c \
+  $(PROJ_DIR)/flash/fvarstorage/internals/fvarstorage_pages.c \
+  $(PROJ_DIR)/flash/fvarstorage/internals/fvarstorage_current_page.c \
+  $(PROJ_DIR)/flash/fappdata.c \
   $(PROJ_DIR)/color_picker/color_picker.c \
   $(PROJ_DIR)/color_picker/controller/color_picker_controller.c \
   $(PROJ_DIR)/color_picker/controller/slider.c \
@@ -32,6 +36,7 @@ SRC_FILES += \
   $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_power.c \
   $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_uart.c \
   $(SDK_ROOT)/modules/nrfx/soc/nrfx_atomic.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_nvmc.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_pwm.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_clock.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_power.c \
@@ -81,6 +86,7 @@ SRC_FILES += \
 # Include folders common to all targets
 INC_FOLDERS += \
   $(PROJ_DIR) \
+  $(PROJ_DIR)/flash/fvarstorage \
   $(SDK_ROOT)/components/libraries/fifo \
   $(SDK_ROOT)/components/libraries/pwm \
   $(SDK_ROOT)/components/libraries/usbd/class/cdc/acm \

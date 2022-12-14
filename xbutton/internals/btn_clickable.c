@@ -73,34 +73,29 @@ typedef struct
 
 static btn_clickable_control_block_t m_cb;
 
-APP_TIMER_DEF(click_timeout_timer);
+APP_TIMER_DEF(m_click_intent_timeout_timer);
 
 static void emit_event(uint8_t button_idx, btn_event_t event)
 {
   switch (event)
   {
     case BUTTON_EVENT_PRESS:
-      NRF_LOG_INFO("[btn_clickable]: [%d] => event:PRESS", button_idx);
       CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_press, button_idx);
       break;
 
     case BUTTON_EVENT_RELEASE:
-      NRF_LOG_INFO("[btn_clickable]: [%d] => event:RELEASE", button_idx);
       CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_release, button_idx);
       break;
 
     case BUTTON_EVENT_CLICK:
-      NRF_LOG_INFO("[btn_clickable]: [%d] => event:CLICK", button_idx);
       CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_click, button_idx);
       break;
 
     case BUTTON_EVENT_LONG_PRESS_START:
-      NRF_LOG_INFO("[btn_clickable]: [%d] => event:LONG_PRESS_START", button_idx);
       CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_long_press_start, button_idx);
       break;
 
     case BUTTON_EVENT_LONG_PRESS_STOP:
-      NRF_LOG_INFO("[btn_clickable]: [%d] => event:LONG_PRESS_STOP", button_idx);
       CALL_IF_NOT_NULL(m_cb.btns[button_idx].on_long_press_stop, button_idx);
       break;
   }
@@ -108,7 +103,7 @@ static void emit_event(uint8_t button_idx, btn_event_t event)
 
 static void start_click_intent_timeout_timer(uint8_t button_idx)
 {
-  app_timer_start(click_timeout_timer,
+  app_timer_start(m_click_intent_timeout_timer,
                   APP_TIMER_TICKS(MAX_CLICK_DURATION_MS),
                   (void *) (uint32_t) button_idx);
 }
@@ -163,7 +158,7 @@ static void handle_press(uint8_t button_idx)
 
 static void handle_release(uint8_t button_idx)
 {
-  app_timer_stop(click_timeout_timer);
+  app_timer_stop(m_click_intent_timeout_timer);
 
   button_fsm_next_state(button_idx, BUTTON_ACTION_RELEASE);
 }
@@ -176,7 +171,7 @@ static void handle_click_timeout_timer(void * context)
 void btn_clickable_init(void)
 {btn_debounced_init();
 
-  ret_code_t ret = app_timer_create(&click_timeout_timer,
+  ret_code_t ret = app_timer_create(&m_click_intent_timeout_timer,
                                     APP_TIMER_MODE_SINGLE_SHOT,
                                     handle_click_timeout_timer);
 
