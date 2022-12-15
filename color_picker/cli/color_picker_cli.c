@@ -6,11 +6,11 @@
 #include "cli/terminal.h"
 #include "cli/utils/validators.h"
 
-#include "colors.cli.parsers.h"
+#include "colors_cli_parsers.h"
 
 #include "../color_picker.h"
 
-#include "color_picker.cli.h"
+#include "color_picker_cli.h"
 
 static void rgb_command_handler(size_t argc, char ** argv)
 {

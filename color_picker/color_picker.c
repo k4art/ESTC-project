@@ -9,7 +9,7 @@
 #include "fvarstorage.h"
 
 #include "color_picker/controller/color_picker_controller.h"
-#include "color_picker/cli/color_picker.cli.h"
+#include "color_picker/cli/color_picker_cli.h"
 
 #include "color_picker/color_picker.h"
 

@@ -1,7 +1,7 @@
 #include "user_input_types.h"
 #include "cli/utils/args_parsers.h"
 
-#include "colors.cli.parsers.h"
+#include "colors_cli_parsers.h"
 
 cli_args_parser_ret_code_t cli_args_parser_user_rgb(char ** args, user_rgb_color_t * p_user_rgb)
 {

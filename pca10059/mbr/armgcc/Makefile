@@ -26,8 +26,8 @@ SRC_FILES += \
   $(PROJ_DIR)/flash/fvarstorage/internals/fvarstorage_pages.c \
   $(PROJ_DIR)/flash/fvarstorage/internals/fvarstorage_current_page.c \
   $(PROJ_DIR)/flash/fappdata.c \
-  $(PROJ_DIR)/color_picker/cli/color_picker.cli.c \
-  $(PROJ_DIR)/color_picker/cli/colors.cli.parsers.c \
+  $(PROJ_DIR)/color_picker/cli/color_picker_cli.c \
+  $(PROJ_DIR)/color_picker/cli/colors_cli_parsers.c \
   $(PROJ_DIR)/color_picker/cli/user_input_types.c \
   $(PROJ_DIR)/color_picker/color_picker.c \
   $(PROJ_DIR)/color_picker/controller/color_picker_controller.c \
