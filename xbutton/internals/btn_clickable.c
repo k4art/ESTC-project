@@ -169,7 +169,8 @@ static void handle_click_timeout_timer(void * context)
 }
 
 void btn_clickable_init(void)
-{btn_debounced_init();
+{
+  btn_debounced_init();
 
   ret_code_t ret = app_timer_create(&m_click_intent_timeout_timer,
                                     APP_TIMER_MODE_SINGLE_SHOT,

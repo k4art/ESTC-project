@@ -134,7 +134,7 @@ void fvarstorage_pages_ensure_format(fvarstorage_t * fvarstorage)
 
   for (int32_t page_idx = 0; page_idx < SIZEOF_IN_BITS(pages_mask); page_idx++)
   {
-    if ((pages_mask & (1 << page_idx)) == 0) continue;
+    if (!CHECK_MASK_BIT_SET(pages_mask, page_idx)) continue;
 
     uint32_t page_addr = FAPPDATA_PAGE_START_ADDR_BY_IDX(page_idx);
 

@@ -111,6 +111,7 @@ static slider_t * get_slider_at(size_t slider_idx)
 
 static void start_current_slider(void)
 {
+  NRFX_ASSERT(m_cb.current_mode != COLOR_PICKER_CONTROLLER_MODE_VIEWER);
   NRFX_ASSERT(m_cb.is_sliding == false);
 
   bsp_idx_t current_idx = get_current_slider_idx();
@@ -121,6 +122,7 @@ static void start_current_slider(void)
 
 static void stop_current_slider(void)
 {
+  NRFX_ASSERT(m_cb.current_mode != COLOR_PICKER_CONTROLLER_MODE_VIEWER);
   NRFX_ASSERT(m_cb.is_sliding);
 
   bsp_idx_t current_idx = get_current_slider_idx();
@@ -243,10 +245,14 @@ void color_picker_controller_enable(uint8_t button_idx, blinking_led_t * p_statu
 
 void color_picker_controller_on_input_change_hsv(color_picker_controller_hsv_handler_t handler)
 {
+  NRFX_ASSERT(handler != NULL);
+
   m_cb.on_input_change = handler;
 }
 
 void color_picker_controller_on_edit_end(color_picker_controller_hsv_handler_t handler)
 {
+  NRFX_ASSERT(handler != NULL);
+
   m_cb.on_edit_end = handler;
 }

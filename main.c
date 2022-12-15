@@ -6,12 +6,15 @@
 
 #include "nrf_log_backend_usb.h"
 
+#include "cli/cli.h"
 #include "gpio/c_bsp.h"
 #include "color_picker/color_picker.h"
 
+#include "app_usbd.h"
+
 #define DEVICE_ID 7202
 
-static void keep_usb_connection(void)
+static void keep_usb_logging(void)
 {
   LOG_BACKEND_USB_PROCESS();
   NRF_LOG_PROCESS();
@@ -27,7 +30,14 @@ static void logs_init(void)
 
 static void initialize(void)
 {
+  c_bsp_board_init();
+
   logs_init();
+
+#if NRFX_CHECK(ESTC_USB_CLI_ENABLED)
+  cli_init();
+#endif
+
   color_picker_init();
 }
 
@@ -53,7 +63,11 @@ int main(void)
 
   while (true)
   {
-    keep_usb_connection();
+#if NRFX_CHECK(ESTC_USB_CLI_ENABLED)
+    cli_process();
+#endif
+
+    keep_usb_logging();
   }
 
   return 0;

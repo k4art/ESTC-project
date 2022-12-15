@@ -6,6 +6,8 @@ DFU_PACKAGE      := $(OUTPUT_DIRECTORY)/nrf52840_xxaa.dfu
 
 PROJ_DIR := ../../..
 
+ESTC_USB_CLI_ENABLED ?= 1
+
 ifndef SDK_ROOT
   $(error SDK_ROOT is not set)
 endif
@@ -15,10 +17,18 @@ $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
 
 # Source files common to all targets
 SRC_FILES += \
+  $(PROJ_DIR)/cli/cli.c \
+  $(PROJ_DIR)/cli/terminal.c \
+  $(PROJ_DIR)/cli/utils/strfns.c \
+  $(PROJ_DIR)/cli/utils/args_parsers.c \
+  $(PROJ_DIR)/cli/internals/usb_connection.c \
   $(PROJ_DIR)/flash/fvarstorage/fvarstorage.c \
   $(PROJ_DIR)/flash/fvarstorage/internals/fvarstorage_pages.c \
   $(PROJ_DIR)/flash/fvarstorage/internals/fvarstorage_current_page.c \
   $(PROJ_DIR)/flash/fappdata.c \
+  $(PROJ_DIR)/color_picker/cli/color_picker_cli.c \
+  $(PROJ_DIR)/color_picker/cli/colors_cli_parsers.c \
+  $(PROJ_DIR)/color_picker/cli/user_input_types.c \
   $(PROJ_DIR)/color_picker/color_picker.c \
   $(PROJ_DIR)/color_picker/controller/color_picker_controller.c \
   $(PROJ_DIR)/color_picker/controller/slider.c \
@@ -57,6 +67,7 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/util/app_error_handler_gcc.c \
   $(SDK_ROOT)/components/libraries/util/app_error_weak.c \
   $(SDK_ROOT)/components/libraries/fifo/app_fifo.c \
+  $(SDK_ROOT)/components/libraries/queue/nrf_queue.c \
   $(SDK_ROOT)/components/libraries/timer/app_timer2.c \
   $(SDK_ROOT)/components/libraries/uart/app_uart_fifo.c \
   $(SDK_ROOT)/components/libraries/usbd/app_usbd.c \
@@ -150,8 +161,11 @@ OPT = -O3 -g3
 # Uncomment the line below to enable link time optimization
 #OPT += -flto
 
+CFLAGS += -DESTC_USB_CLI_ENABLED=$(ESTC_USB_CLI_ENABLED)
+
 # C flags common to all targets
 CFLAGS += $(OPT)
+CFLAGS += -DDEBUG_NRF
 CFLAGS += -DUSE_APP_CONFIG
 CFLAGS += -Wno-array-bounds
 CFLAGS += -DAPP_TIMER_V2

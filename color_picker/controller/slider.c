@@ -96,21 +96,23 @@ static void update_value_timer_handler(void * context)
 
 void slider_init(void)
 {
-  app_timer_init();
-
-  app_timer_create(&m_update_value_timer, APP_TIMER_MODE_REPEATED, update_value_timer_handler);
+  ret_code_t err = app_timer_create(&m_update_value_timer, APP_TIMER_MODE_REPEATED, update_value_timer_handler);
+  APP_ERROR_CHECK(err);
 }
 
 void slider_start(slider_t * slider)
 {
-  app_timer_start(m_update_value_timer,
-                  APP_TIMER_TICKS(SLIDER_INCREMENTING_PERIOD_MS),
-                  slider);
+  ret_code_t err = app_timer_start(m_update_value_timer,
+                                   APP_TIMER_TICKS(SLIDER_INCREMENTING_PERIOD_MS),
+                                   slider);
+
+  APP_ERROR_CHECK(err);
 }
 
 void slider_stop(slider_t * slider)
 {
-  app_timer_stop(m_update_value_timer);
+  ret_code_t err = app_timer_stop(m_update_value_timer);
+  APP_ERROR_CHECK(err);
 }
 
 uint16_t slider_get_value(slider_t * slider)
