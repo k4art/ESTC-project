@@ -15,14 +15,14 @@ cli_args_parser_ret_code_t cli_args_parser_user_rgb(char ** args, user_rgb_color
   return ret;
 }
 
-cli_args_parser_ret_code_t cli_args_parser_user_hsv(char ** args, user_hsv_color_t * p_hsv_color)
+cli_args_parser_ret_code_t cli_args_parser_user_hsv(char ** args, user_hsv_color_t * p_user_hsv)
 {
   cli_args_parser_ret_code_t ret;
 
   ret = cli_args_parser_int_series_ranged(args,
                                           HSV_COMPONENTS_NUMBER,
                                           USER_HSV_COLOR_MAXS,
-                                          p_hsv_color->components);
+                                          p_user_hsv->components);
 
   return ret;
 }
