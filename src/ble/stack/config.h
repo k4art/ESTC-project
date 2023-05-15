@@ -22,4 +22,12 @@
 #define BLE_APP_ADV_DEV_INFO_UUID_IDX   0
 #define BLE_APP_ADV_LED_SERV_UUID_IDX   1
 
+/*
+ * By default if the bonded device deleted bonding info,
+ * or it is not longer available, it would be require some way
+ * to make the system forget the bonded device.
+ * Since it is not implemented, allowing repairing comes in handy.
+ */
+#define BLE_PM_ALLOW_REPAIRING 1
+
 #endif

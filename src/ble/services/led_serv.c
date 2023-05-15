@@ -9,53 +9,114 @@
 #include "led_serv.h"
 #include "nrf_sdh_ble.h"
 
+typedef struct char_prep_s
+{
+  char                * p_user_desc;
+  ble_uuid_t          * p_uuid;
+  ble_gatts_attr_md_t * p_attr_md;
+  ble_gatts_char_md_t * p_char_md;
+  ble_gatts_attr_t    * p_attr_value;
+} char_prep_t;
+
 static ble_app_serv_led_t m_ble_app_serv_led =
 {
   .conn_handle = BLE_CONN_HANDLE_INVALID,
 };
 
-static ret_code_t add_led_color_char(ble_app_serv_led_t * serv)
+static void characteristic_prepare(char_prep_t * prep)
+{
+  ble_srv_utf8_str_t    user_desc;
+
+  ble_srv_ascii_to_utf8(&user_desc, prep->p_user_desc);
+
+  prep->p_char_md->p_char_user_desc        = user_desc.p_str;
+  prep->p_char_md->char_user_desc_size     = user_desc.length;
+  prep->p_char_md->char_user_desc_max_size = user_desc.length;
+
+  prep->p_attr_value->p_uuid    = prep->p_uuid;
+  prep->p_attr_value->p_attr_md = prep->p_attr_md;
+}
+
+static ret_code_t add_led_color_writer_char(ble_app_serv_led_t * serv)
 {
   ble_uuid_t char_uuid =
   {
-    .uuid = BLE_APP_SERV_LED_COLOR_CHAR_UUID,
+    .uuid = BLE_APP_SERV_LED_COLOR_WRITER_CHAR_UUID,
     .type = serv->uuid_type,
   };
 
-  ble_srv_utf8_str_t user_desc;
-
-  ble_srv_ascii_to_utf8(&user_desc, BLE_APP_SERV_LED_COLOR_CHAR_USER_DESC);
-
   ble_gatts_attr_md_t attr_md = { .vloc = BLE_GATTS_VLOC_STACK };
-  ble_gatts_attr_md_t cccd_md = { .vloc = BLE_GATTS_VLOC_STACK };
-
-  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
-  BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&attr_md.write_perm);
-
-  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
-  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.write_perm);
-
-  ble_gatts_char_md_t char_md =
-  {
-    .char_props              = { .notify = 1, .read = 1, .write = 1 },
-    .p_char_user_desc        = user_desc.p_str,
-    .char_user_desc_size     = user_desc.length,
-    .char_user_desc_max_size = user_desc.length,
-    .p_cccd_md               = &cccd_md,
-  };
+  ble_gatts_char_md_t char_md = { .char_props.write = 1 };
 
   ble_gatts_attr_t attr_char_value =
   {
-    .p_uuid     = &char_uuid,
-    .p_attr_md  = &attr_md,
-    .max_len    = sizeof(rgb_color_t),
-    .init_len   = sizeof(rgb_color_t),
+    .max_len  = sizeof(rgb_color_t),
+    .init_len = sizeof(rgb_color_t),
   };
+
+  characteristic_prepare(&(char_prep_t)
+  {
+    .p_user_desc  = BLE_APP_SERV_LED_COLOR_WRITER_CHAR_USER_DESC,
+    .p_uuid       = &char_uuid,
+    .p_attr_md    = &attr_md,
+    .p_char_md    = &char_md,
+    .p_attr_value = &attr_char_value,
+  });
+
+  BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&attr_md.write_perm);
 
   return sd_ble_gatts_characteristic_add(serv->service_handle,
                                          &char_md,
                                          &attr_char_value,
-                                         &serv->char_color_handles);
+                                         &serv->writer_char_handles);
+}
+
+static ret_code_t add_led_color_reader_char(ble_app_serv_led_t * serv)
+{
+  ble_uuid_t char_uuid =
+  {
+    .uuid = BLE_APP_SERV_LED_COLOR_READER_CHAR_UUID,
+    .type = serv->uuid_type,
+  };
+
+  ble_gatts_attr_md_t attr_md = { .vloc = BLE_GATTS_VLOC_STACK };
+  ble_gatts_attr_md_t cccd_md = { .vloc = BLE_GATTS_VLOC_STACK };
+  ble_gatts_char_md_t char_md =
+  {
+    .char_props.notify = 1,
+    .char_props.read   = 1,
+  };
+
+  ble_gatts_attr_t attr_char_value =
+  {
+    .max_len  = sizeof(rgb_color_t),
+    .init_len = sizeof(rgb_color_t),
+  };
+
+  characteristic_prepare(&(char_prep_t)
+  {
+    .p_user_desc  = BLE_APP_SERV_LED_COLOR_READER_CHAR_USER_DESC,
+    .p_uuid       = &char_uuid,
+    .p_attr_md    = &attr_md,
+    .p_char_md    = &char_md,
+    .p_attr_value = &attr_char_value,
+  });
+
+  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
+
+  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
+  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.write_perm);
+
+  return sd_ble_gatts_characteristic_add(serv->service_handle,
+                                         &char_md,
+                                         &attr_char_value,
+                                         &serv->reader_char_handles);
+}
+
+static void add_led_color_chars(ble_app_serv_led_t * serv)
+{
+  CHECKED(add_led_color_reader_char(serv));
+  CHECKED(add_led_color_writer_char(serv));
 }
 
 static void set_char_led_color_value(rgb_color_t color)
@@ -68,7 +129,7 @@ static void set_char_led_color_value(rgb_color_t color)
   };
 
   sd_ble_gatts_value_set(BLE_CONN_HANDLE_INVALID,
-                         m_ble_app_serv_led.char_color_handles.value_handle,
+                         m_ble_app_serv_led.reader_char_handles.value_handle,
                          &value);
 }
 
@@ -81,7 +142,7 @@ static void sync_char_led_color_value(app_events_evt_t evt, uint32_t data)
   {
     ble_gatts_hvx_params_t hvx_params =
     {
-      .handle = serv->char_color_handles.value_handle,
+      .handle = serv->reader_char_handles.value_handle,
       .type   = BLE_GATT_HVX_NOTIFICATION,
       .offset = 0,
       .p_len  = &(uint16_t) { sizeof(rgb_color_t) },
@@ -92,14 +153,6 @@ static void sync_char_led_color_value(app_events_evt_t evt, uint32_t data)
   }
   else
   {
-    // If there is no connection, the attribute value should be update for consistency,
-    // so that a new connection will read up-to-date color value.
-
-    // TODO: Maintaining the attribute value in case of absence of a connection
-    // is not necessary. An alternative to this might be accomplished as follows:
-    // 1. Color Picker allows to read its current color
-    // 2. On new connection event get the color and call set_char_led_color_value()
-
     set_char_led_color_value(color);
   }
 }
@@ -119,7 +172,7 @@ ret_code_t ble_app_serv_led_init(ble_uuid_t * p_uuid)
                                    p_uuid,
                                    &m_ble_app_serv_led.service_handle));
 
-  CHECKED(add_led_color_char(&m_ble_app_serv_led));
+  add_led_color_chars(&m_ble_app_serv_led);
 
   NRF_SDH_BLE_OBSERVER(ble_app_serv_led,
                        BLE_APP_OBSERVER_PRIO,
@@ -134,13 +187,7 @@ static void handle_led_color_write(const ble_gatts_evt_write_t * evt)
   if (evt->len != 3 || evt->offset != 0)
   {
     NRF_LOG_INFO("The %s characterstic should be written with len = 3 and offset = 0",
-                 BLE_APP_SERV_LED_COLOR_CHAR_USER_DESC);
-
-    // FIXME: the color is not changed (because of this if-else), but
-    // the attribute value is modified. It should be synchronized  with Color Picker,
-    // because the next connection might read incorrect color value.
-
-    return;
+                 BLE_APP_SERV_LED_COLOR_WRITER_CHAR_USER_DESC);
   }
   else
   {
@@ -170,7 +217,7 @@ void ble_app_serv_led_evt_handler(const ble_evt_t * ble_evt, void * context)
     {
       const ble_gatts_evt_write_t * evt = &ble_evt->evt.gatts_evt.params.write;
 
-      if (evt->uuid.uuid == BLE_APP_SERV_LED_COLOR_CHAR_UUID)
+      if (evt->uuid.uuid == BLE_APP_SERV_LED_COLOR_WRITER_CHAR_UUID)
       {
         handle_led_color_write(evt);
       }

@@ -73,9 +73,6 @@ static void services_init(void)
 {
   nrf_ble_qwr_init_t qwr_init = {0};
 
-  // Initialize Queued Write Module.
-  // qwr_init.error_handler = nrf_qwr_error_handler;
-
   CHECKED(nrf_ble_qwr_init(&m_qwr, &qwr_init));
   CHECKED(ble_app_serv_led_init(&m_adv_uuids[BLE_APP_ADV_LED_SERV_UUID_IDX]));
 }
@@ -85,6 +82,23 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
   pm_handler_on_pm_evt(p_evt);
   pm_handler_disconnect_on_sec_failure(p_evt);
   pm_handler_flash_clean(p_evt);
+
+  switch (p_evt->evt_id)
+  {
+    case PM_EVT_CONN_SEC_CONFIG_REQ:
+
+#ifdef BLE_PM_ALLOW_REPAIRING
+      pm_conn_sec_config_reply(p_evt->conn_handle, &(pm_conn_sec_config_t)
+      {
+        .allow_repairing = true,
+      });
+#endif
+
+      break;
+
+    default:
+      break;
+  }
 }
 
 static void peer_manager_init(void)
