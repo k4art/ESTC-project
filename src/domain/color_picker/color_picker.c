@@ -53,14 +53,15 @@ static void hsv_color_input_change_handler(hsv_color_t hsv)
   display_hsv_color(hsv);
 }
 
-
-static void edit_end_handler(hsv_color_t hsv)
+static void save_hsv(hsv_color_t hsv)
 {
   uint32_t word = hsv_to_word(hsv);
-
-  NRF_LOG_INFO("[color_picker]: edit end");
-
   fvarstorage_save(&m_cb.fstorage, &word);
+}
+
+static void sync_color_hsv(app_events_evt_t evt, uint32_t word)
+{
+  save_hsv(word_to_hsv(word));
 }
 
 void color_picker_init(void)
@@ -84,6 +85,8 @@ void color_picker_set_hsv(hsv_color_t hsv)
 {
   display_hsv_color(hsv);
   color_picker_controller_set_hsv(hsv);
+
+  app_events_emit(APP_EVENTS_EVT_COLOR_PICKER_SYNC, hsv_to_word(hsv));
 }
 
 void color_picker_restore_or_set_default_hsv(hsv_color_t hsv)
@@ -109,5 +112,7 @@ void color_picker_enable(bsp_idx_t button_idx, bsp_idx_t rgb_led_idx, bsp_idx_t 
 
   color_picker_controller_enable(USER_BUTTON_IDX, &m_cb.status_blinking_led);
   color_picker_controller_on_input_change_hsv(hsv_color_input_change_handler);
-  color_picker_controller_on_edit_end(edit_end_handler);
+  color_picker_controller_on_edit_end(save_hsv);
+
+  app_events_on(APP_EVENTS_EVT_COLOR_PICKER_SYNC, sync_color_hsv);
 }

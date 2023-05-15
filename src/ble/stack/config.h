@@ -6,7 +6,7 @@
 #define BLE_APP_DEVICE_NAME             "ESTC Color Picker"
 
 #define BLE_APP_ADV_INTERVAL            MSEC_TO_UNITS(200,  UNIT_0_625_MS)
-#define BLE_APP_ADV_DURATION            MSEC_TO_UNITS(5000, UNIT_10_MS)
+#define BLE_APP_ADV_DURATION            MSEC_TO_UNITS(18000, UNIT_10_MS)
 
 #define BLE_APP_OBSERVER_PRIO           3
 #define BLE_APP_CONN_CFG_TAG            1

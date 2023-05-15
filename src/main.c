@@ -19,17 +19,15 @@
 
 #define DEVICE_ID 7202
 
-static bool keep_usb_logging(void)
+static bool keep_usb_logs_alive(void)
 {
   LOG_BACKEND_USB_PROCESS();
-  return !NRF_LOG_PROCESS();
+  return NRF_LOG_PROCESS();
 }
 
 static void logs_init(void)
 {
-  ret_code_t ret = NRF_LOG_INIT(NULL);
-  APP_ERROR_CHECK(ret);
-
+  CHECKED(NRF_LOG_INIT(NULL));
   NRF_LOG_DEFAULT_BACKENDS_INIT();
 }
 
@@ -40,12 +38,12 @@ static void initialize(void)
 
   CHECKED(app_timer_init());
   CHECKED(nrf_pwr_mgmt_init());
+  ble_app_startup();
 
 #if NRFX_CHECK(ESTC_USB_CLI_ENABLED)
   cli_init();
 #endif
 
-  ble_app_startup();
   color_picker_init();
 }
 
@@ -78,7 +76,7 @@ int main(void)
     app_events_process();
     app_input_process();
 
-    if (keep_usb_logging()) nrf_pwr_mgmt_run();
+    if (!keep_usb_logs_alive()) nrf_pwr_mgmt_run();
   }
 
   return 0;

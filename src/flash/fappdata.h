@@ -1,15 +1,19 @@
-#ifndef __FAPPDATA_DEFS_H
-#define __FAPPDATA_DEFS_H
+#ifndef FAPPDATA_DEFS_H__
+#define FAPPDATA_DEFS_H__
 
+#include "sdk_config.h"
 #include "lib/utils.h"
 
 #define BOOTLOADER_START_ADDR 0xE0000
 
 #define FAPPDATA_PAGE_SIZE    0x1000
-#define FAPPDATA_PAGES_NUMBER (NRF_DFU_APP_DATA_AREA_SIZE / FAPPDATA_PAGE_SIZE)
+#define FAPPDATA_PAGES_NUMBER 2
 
-#define FAPPDATA_START_ADDR   (BOOTLOADER_START_ADDR - NRF_DFU_APP_DATA_AREA_SIZE)
-#define FAPPDATA_END_ADDR     BOOTLOADER_START_ADDR
+// BOOTLOADER_START_ADDR - FDS (Peer Manager)
+#define FAPPDATA_END_ADDR     (  BOOTLOADER_START_ADDR                            \
+                                - FDS_VIRTUAL_PAGE_SIZE * 4 * FDS_VIRTUAL_PAGES)
+
+#define FAPPDATA_START_ADDR   (FAPPDATA_END_ADDR - FAPPDATA_PAGE_SIZE * FAPPDATA_PAGES_NUMBER)
 
 /* Should not be used if no pages for Application Data are avaiable. */
 STATIC_ASSERT(FAPPDATA_PAGES_NUMBER >= 1);

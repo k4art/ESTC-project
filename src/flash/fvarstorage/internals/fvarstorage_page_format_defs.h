@@ -2,6 +2,7 @@
 #define FVARSTORAGE_PAGEE_FORMAT_DEFS_H
 
 #include "lib/utils.h"
+#include "flash/fappdata.h"
 
 /*************** PAGE FORMAT ***************/
 

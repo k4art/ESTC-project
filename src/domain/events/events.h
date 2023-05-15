@@ -9,6 +9,7 @@
 enum
 {
   APP_EVENTS_EVT_LED_SYNC = 1,
+  APP_EVENTS_EVT_COLOR_PICKER_SYNC,
 };
 
 typedef event_emitter_evt_t app_events_evt_t;

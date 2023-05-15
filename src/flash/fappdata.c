@@ -18,17 +18,12 @@ NRF_FSTORAGE_DEF(nrf_fstorage_t fstorage) =
   .end_addr    = FAPPDATA_END_ADDR,
 };
 
-static void power_manage(void)
-{
-  (void) sd_app_evt_wait();
-  __WFE();
-}
-
 static void wait_for_flash_ready(void)
 {
   while (nrf_fstorage_is_busy(&fstorage))
   {
-    power_manage();
+    sd_app_evt_wait();
+    __WFE();
   }
 }
 

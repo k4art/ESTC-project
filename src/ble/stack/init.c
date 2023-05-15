@@ -6,11 +6,13 @@
 #include "ble_advdata.h"
 #include "ble_advertising.h"
 #include "ble_conn_params.h"
+#include "ble_conn_state.h"
+#include "peer_manager.h"
+#include "peer_manager_handler.h"
 
 #include "nrf_sdh.h"
 #include "nrf_sdh_soc.h"
 #include "nrf_sdh_ble.h"
-#include "ble_conn_state.h"
 
 #include "nrfx.h"
 #include "nrf_log.h"
@@ -69,14 +71,41 @@ static void gap_params_init(void)
 
 static void services_init(void)
 {
-  // nrf_ble_qwr_init_t qwr_init = {0};
+  nrf_ble_qwr_init_t qwr_init = {0};
 
   // Initialize Queued Write Module.
   // qwr_init.error_handler = nrf_qwr_error_handler;
 
-  // CHECKED(nrf_ble_qwr_init(&m_qwr, &qwr_init));
-
+  CHECKED(nrf_ble_qwr_init(&m_qwr, &qwr_init));
   CHECKED(ble_app_serv_led_init(&m_adv_uuids[BLE_APP_ADV_LED_SERV_UUID_IDX]));
+}
+
+static void pm_evt_handler(pm_evt_t const * p_evt)
+{
+  pm_handler_on_pm_evt(p_evt);
+  pm_handler_disconnect_on_sec_failure(p_evt);
+  pm_handler_flash_clean(p_evt);
+}
+
+static void peer_manager_init(void)
+{
+  // "Just Works Bonding"
+  // Source: https://infocenter.nordicsemi.com/index.jsp?topic=%2Fsdk_nrf5_v17.1.0%2Flib_pm_usage.html
+  ble_gap_sec_params_t sec_params =
+  {
+    .bond           = true,
+    .io_caps        = BLE_GAP_IO_CAPS_NONE,
+    .min_key_size   = 7,
+    .max_key_size   = 16,
+    .kdist_own.enc  = 1,
+    .kdist_own.id   = 1,
+    .kdist_peer.enc = 1,
+    .kdist_peer.id  = 1,
+  };
+
+  CHECKED(pm_init());
+  CHECKED(pm_sec_params_set(&sec_params));
+  CHECKED(pm_register(pm_evt_handler));
 }
 
 static void initialize(void)
@@ -88,8 +117,9 @@ static void initialize(void)
 
   ble_app_adverts_init(&m_advertising,
                        m_adv_uuids,
-                       1);
-                       //NRFX_ARRAY_SIZE(m_adv_uuids));
+                       NRFX_ARRAY_SIZE(m_adv_uuids) - 1);
+
+  peer_manager_init();
 }
 
 void ble_app_startup(void)

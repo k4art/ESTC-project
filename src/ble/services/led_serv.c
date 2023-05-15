@@ -30,7 +30,7 @@ static ret_code_t add_led_color_char(ble_app_serv_led_t * serv)
   ble_gatts_attr_md_t cccd_md = { .vloc = BLE_GATTS_VLOC_STACK };
 
   BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
-  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
+  BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&attr_md.write_perm);
 
   BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
   BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.write_perm);
